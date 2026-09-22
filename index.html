@@ -1,0 +1,3471 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+
+<title>MesajX — Özel Mesajlaşma</title>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<style>
+:root{
+    --bg:#07090d;
+    --panel:#0d1118;
+    --panel2:#111722;
+    --panel3:#171e2a;
+    --line:rgba(255,255,255,.08);
+    --text:#f4f7fb;
+    --muted:#8d98a8;
+    --accent:#4f8cff;
+    --accent2:#6d5dfc;
+    --green:#35d58a;
+    --danger:#ff5f6d;
+    --warning:#f5b942;
+    --bubble:#172131;
+    --bubbleMine:#315ea8;
+    --radius:20px;
+}
+
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+}
+
+body{
+    min-height:100vh;
+    background:
+        radial-gradient(circle at 20% 0%,rgba(79,140,255,.12),transparent 30%),
+        radial-gradient(circle at 100% 100%,rgba(109,93,252,.10),transparent 30%),
+        var(--bg);
+    color:var(--text);
+    font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    overflow:hidden;
+}
+
+button,input,textarea{
+    font:inherit;
+}
+
+button{
+    border:0;
+    cursor:pointer;
+}
+
+.hidden{
+    display:none!important;
+}
+
+/* AUTH */
+
+.auth{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+}
+
+.auth-card{
+    width:min(430px,100%);
+    padding:32px;
+    border:1px solid var(--line);
+    background:rgba(13,17,24,.88);
+    backdrop-filter:blur(25px);
+    border-radius:28px;
+    box-shadow:0 30px 100px rgba(0,0,0,.45);
+}
+
+.logo{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    font-size:25px;
+    font-weight:800;
+    margin-bottom:10px;
+}
+
+.logo-mark{
+    width:45px;
+    height:45px;
+    display:grid;
+    place-items:center;
+    border-radius:14px;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+}
+
+.auth-sub{
+    color:var(--muted);
+    margin-bottom:26px;
+}
+
+.field{
+    margin-bottom:14px;
+}
+
+.field label{
+    display:block;
+    color:#aeb8c8;
+    font-size:13px;
+    margin-bottom:7px;
+}
+
+.field input,
+.search-box input,
+.composer input,
+.composer textarea{
+    width:100%;
+    border:1px solid var(--line);
+    outline:none;
+    color:var(--text);
+    background:#0a0e14;
+    border-radius:14px;
+    padding:13px 14px;
+}
+
+.field input:focus,
+.search-box input:focus,
+.composer input:focus,
+.composer textarea:focus{
+    border-color:rgba(79,140,255,.7);
+}
+
+.primary{
+    width:100%;
+    padding:13px;
+    border-radius:14px;
+    color:white;
+    font-weight:700;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+}
+
+.switch-auth{
+    text-align:center;
+    color:var(--muted);
+    margin-top:18px;
+    font-size:14px;
+}
+
+.switch-auth button{
+    color:#82aaff;
+    background:none;
+}
+
+/* APP */
+
+.app{
+    height:100vh;
+    display:grid;
+    grid-template-columns:330px 1fr;
+}
+
+.sidebar{
+    border-right:1px solid var(--line);
+    background:rgba(10,13,18,.86);
+    backdrop-filter:blur(20px);
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+}
+
+.profile-mini{
+    padding:18px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    border-bottom:1px solid var(--line);
+}
+
+.avatar{
+    width:46px;
+    height:46px;
+    flex:none;
+    border-radius:50%;
+    background:linear-gradient(135deg,#2e78ff,#785eff);
+    display:grid;
+    place-items:center;
+    overflow:hidden;
+    font-weight:800;
+}
+
+.avatar img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+.profile-info{
+    min-width:0;
+    flex:1;
+}
+
+.profile-name{
+    font-weight:700;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.profile-code{
+    font-size:11px;
+    color:var(--muted);
+    margin-top:3px;
+}
+
+.icon-btn{
+    width:40px;
+    height:40px;
+    border-radius:12px;
+    background:transparent;
+    color:#aab5c6;
+    display:grid;
+    place-items:center;
+}
+
+.icon-btn:hover{
+    background:var(--panel3);
+    color:white;
+}
+
+.search-box{
+    padding:14px;
+    position:relative;
+}
+
+.search-box input{
+    padding-left:40px;
+}
+
+.search-icon{
+    position:absolute;
+    left:27px;
+    top:27px;
+    color:#758092;
+    width:18px;
+}
+
+.sidebar-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    padding:0 14px 14px;
+}
+
+.action-btn{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:7px;
+    padding:11px;
+    border-radius:12px;
+    background:var(--panel2);
+    border:1px solid var(--line);
+    color:#d8dfeb;
+}
+
+.action-btn:hover{
+    background:var(--panel3);
+}
+
+.chat-list{
+    overflow:auto;
+    padding:4px 8px 20px;
+}
+
+.chat-item{
+    padding:12px;
+    border-radius:15px;
+    display:flex;
+    align-items:center;
+    gap:11px;
+    cursor:pointer;
+    margin-bottom:3px;
+}
+
+.chat-item:hover,
+.chat-item.active{
+    background:#151d29;
+}
+
+.chat-content{
+    min-width:0;
+    flex:1;
+}
+
+.chat-top{
+    display:flex;
+    justify-content:space-between;
+    gap:8px;
+}
+
+.chat-name{
+    font-weight:650;
+}
+
+.chat-time{
+    color:#687386;
+    font-size:11px;
+}
+
+.chat-preview{
+    color:#7e8a9c;
+    font-size:13px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    margin-top:3px;
+}
+
+.unread{
+    min-width:19px;
+    height:19px;
+    padding:0 5px;
+    border-radius:20px;
+    background:var(--accent);
+    display:grid;
+    place-items:center;
+    font-size:10px;
+    font-weight:800;
+}
+
+/* MAIN */
+
+.main{
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+}
+
+.topbar{
+    height:76px;
+    border-bottom:1px solid var(--line);
+    background:rgba(9,12,17,.72);
+    backdrop-filter:blur(18px);
+    display:flex;
+    align-items:center;
+    padding:0 20px;
+    gap:12px;
+}
+
+.chat-title{
+    flex:1;
+    min-width:0;
+}
+
+.chat-title strong{
+    display:block;
+}
+
+.chat-title small{
+    color:var(--muted);
+}
+
+.messages{
+    flex:1;
+    overflow:auto;
+    padding:25px max(20px,calc((100% - 900px)/2));
+}
+
+.empty{
+    height:100%;
+    display:grid;
+    place-items:center;
+    text-align:center;
+    color:var(--muted);
+}
+
+.empty-box{
+    max-width:420px;
+}
+
+.empty-box .big-icon{
+    width:70px;
+    height:70px;
+    border-radius:22px;
+    margin:0 auto 18px;
+    display:grid;
+    place-items:center;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    color:white;
+}
+
+.message-row{
+    display:flex;
+    margin:6px 0;
+}
+
+.message-row.mine{
+    justify-content:flex-end;
+}
+
+.message{
+    max-width:min(72%,600px);
+    position:relative;
+}
+
+.bubble{
+    background:var(--bubble);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:10px 12px;
+    line-height:1.45;
+}
+
+.mine .bubble{
+    background:var(--bubbleMine);
+    border-color:rgba(255,255,255,.06);
+    border-bottom-right-radius:5px;
+}
+
+.message-row:not(.mine) .bubble{
+    border-bottom-left-radius:5px;
+}
+
+.message-meta{
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    gap:5px;
+    margin-top:4px;
+    font-size:10px;
+    color:#91a0b5;
+}
+
+.message-tools{
+    position:absolute;
+    top:-38px;
+    right:0;
+    background:#141b26;
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:4px;
+    display:none;
+    gap:3px;
+    box-shadow:0 12px 30px rgba(0,0,0,.35);
+}
+
+.message:hover .message-tools{
+    display:flex;
+}
+
+.message-tools button{
+    background:none;
+    color:#bbc5d4;
+    width:30px;
+    height:30px;
+    border-radius:8px;
+}
+
+.message-tools button:hover{
+    background:#222c3a;
+    color:white;
+}
+
+.reactions{
+    display:flex;
+    gap:3px;
+    margin-top:-3px;
+    position:relative;
+    z-index:2;
+}
+
+.reaction{
+    padding:3px 6px;
+    border-radius:12px;
+    background:#101720;
+    border:1px solid var(--line);
+    font-size:13px;
+    animation:pop .25s ease;
+}
+
+@keyframes pop{
+    0%{transform:scale(.5);opacity:0}
+    70%{transform:scale(1.15)}
+    100%{transform:scale(1);opacity:1}
+}
+
+/* COMPOSER */
+
+.composer-wrap{
+    padding:12px 18px 18px;
+    background:rgba(8,11,16,.9);
+}
+
+.composer{
+    max-width:950px;
+    margin:auto;
+    display:flex;
+    align-items:flex-end;
+    gap:8px;
+    padding:8px;
+    background:#111721;
+    border:1px solid var(--line);
+    border-radius:19px;
+}
+
+.composer textarea{
+    resize:none;
+    min-height:43px;
+    max-height:130px;
+    border:0;
+    background:transparent;
+    padding:11px 7px;
+}
+
+.send-btn{
+    width:44px;
+    height:44px;
+    border-radius:13px;
+    display:grid;
+    place-items:center;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    color:white;
+}
+
+.attach-btn{
+    width:42px;
+    height:42px;
+    border-radius:12px;
+    background:transparent;
+    color:#98a5b8;
+    display:grid;
+    place-items:center;
+}
+
+/* STATUS */
+
+.status-view{
+    flex:1;
+    overflow:auto;
+    padding:25px;
+}
+
+.status-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+    gap:15px;
+    max-width:1000px;
+    margin:auto;
+}
+
+.status-card{
+    min-height:260px;
+    border-radius:20px;
+    overflow:hidden;
+    position:relative;
+    background:#111721;
+    border:1px solid var(--line);
+    cursor:pointer;
+}
+
+.status-card img,
+.status-card video{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+.status-gradient{
+    position:absolute;
+    inset:0;
+    background:linear-gradient(transparent 40%,rgba(0,0,0,.85));
+}
+
+.status-info{
+    position:absolute;
+    bottom:15px;
+    left:14px;
+    right:14px;
+}
+
+.status-user{
+    font-weight:700;
+}
+
+.status-text{
+    margin-top:5px;
+    color:#d3dae4;
+    font-size:13px;
+}
+
+/* MODAL */
+
+.modal-layer{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.68);
+    backdrop-filter:blur(10px);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    z-index:100;
+}
+
+.modal-layer.show{
+    display:flex;
+}
+
+.modal{
+    width:min(500px,100%);
+    max-height:90vh;
+    overflow:auto;
+    background:#101620;
+    border:1px solid var(--line);
+    border-radius:24px;
+    padding:22px;
+    box-shadow:0 30px 100px rgba(0,0,0,.5);
+}
+
+.modal-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:20px;
+}
+
+.modal-head h2{
+    font-size:19px;
+}
+
+.modal-close{
+    width:35px;
+    height:35px;
+    border-radius:10px;
+    background:#181f2a;
+    color:#aab5c5;
+}
+
+.modal-actions{
+    display:flex;
+    gap:8px;
+    margin-top:18px;
+}
+
+.modal-actions button{
+    flex:1;
+    padding:12px;
+    border-radius:12px;
+}
+
+.secondary{
+    background:#1a222f;
+    color:#dce3ed;
+}
+
+.danger{
+    background:rgba(255,95,109,.12);
+    color:#ff7c87;
+}
+
+.success{
+    background:rgba(53,213,138,.12);
+    color:#54dfa0;
+}
+
+.person-card{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:13px;
+    background:#141b26;
+    border:1px solid var(--line);
+    border-radius:15px;
+    margin-top:12px;
+}
+
+.person-card-info{
+    flex:1;
+}
+
+.person-card small{
+    display:block;
+    color:var(--muted);
+    margin-top:3px;
+}
+
+/* EMOJI */
+
+.emoji-panel{
+    position:absolute;
+    bottom:70px;
+    left:10px;
+    width:min(370px,calc(100vw - 20px));
+    max-height:390px;
+    background:#101620;
+    border:1px solid var(--line);
+    border-radius:20px;
+    box-shadow:0 20px 70px rgba(0,0,0,.5);
+    padding:12px;
+    display:none;
+    z-index:30;
+}
+
+.emoji-panel.show{
+    display:block;
+}
+
+.emoji-search{
+    width:100%;
+    background:#080c12;
+    color:white;
+    border:1px solid var(--line);
+    border-radius:11px;
+    padding:9px;
+    outline:none;
+    margin-bottom:9px;
+}
+
+.emoji-tabs{
+    display:flex;
+    gap:5px;
+    overflow:auto;
+    margin-bottom:10px;
+}
+
+.emoji-tabs button{
+    background:#171f2b;
+    color:#9ba8b9;
+    border-radius:9px;
+    min-width:35px;
+    height:33px;
+}
+
+.emoji-grid{
+    display:grid;
+    grid-template-columns:repeat(8,1fr);
+    gap:4px;
+    overflow:auto;
+    max-height:270px;
+}
+
+.emoji-grid button{
+    background:none;
+    font-size:24px;
+    padding:5px;
+    border-radius:9px;
+    transition:.15s;
+}
+
+.emoji-grid button:hover{
+    background:#202a39;
+    transform:scale(1.2);
+}
+
+/* SECURITY */
+
+.security-box{
+    border-radius:16px;
+    padding:16px;
+    margin-top:12px;
+    border:1px solid var(--line);
+}
+
+.security-safe{
+    background:rgba(53,213,138,.08);
+    border-color:rgba(53,213,138,.2);
+}
+
+.security-risk{
+    background:rgba(255,95,109,.08);
+    border-color:rgba(255,95,109,.25);
+}
+
+.security-icon{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-weight:700;
+}
+
+.security-details{
+    color:#9ba7b8;
+    font-size:13px;
+    margin-top:9px;
+    line-height:1.5;
+}
+
+/* PROFILE */
+
+.profile-large{
+    text-align:center;
+}
+
+.profile-large .avatar{
+    width:90px;
+    height:90px;
+    margin:auto;
+    font-size:25px;
+}
+
+.code-box{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:12px;
+    border:1px dashed rgba(79,140,255,.4);
+    border-radius:14px;
+    background:rgba(79,140,255,.06);
+    margin-top:15px;
+}
+
+.code{
+    font-family:monospace;
+    font-weight:800;
+    color:#83adff;
+    letter-spacing:1px;
+}
+
+/* TOAST */
+
+.toast-container{
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    z-index:500;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+}
+
+.toast{
+    background:#151d29;
+    border:1px solid var(--line);
+    padding:12px 15px;
+    border-radius:13px;
+    box-shadow:0 15px 40px rgba(0,0,0,.35);
+    animation:toastIn .25s ease;
+}
+
+@keyframes toastIn{
+    from{transform:translateY(15px);opacity:0}
+    to{transform:none;opacity:1}
+}
+
+/* MOBILE */
+
+.mobile-nav{
+    display:none;
+}
+
+@media(max-width:800px){
+    .app{
+        grid-template-columns:1fr;
+    }
+
+    .sidebar{
+        position:fixed;
+        inset:0 0 65px 0;
+        z-index:20;
+        display:none;
+    }
+
+    .sidebar.mobile-open{
+        display:flex;
+    }
+
+    .main{
+        height:calc(100vh - 65px);
+    }
+
+    .mobile-nav{
+        position:fixed;
+        bottom:0;
+        left:0;
+        right:0;
+        height:65px;
+        background:#0c1118;
+        border-top:1px solid var(--line);
+        display:flex;
+        z-index:50;
+    }
+
+    .mobile-nav button{
+        flex:1;
+        background:none;
+        color:#7f8b9d;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        gap:4px;
+        font-size:10px;
+    }
+
+    .mobile-nav button.active{
+        color:#79a5ff;
+    }
+
+    .messages{
+        padding:18px 12px;
+    }
+
+    .message{
+        max-width:85%;
+    }
+
+    .topbar{
+        padding:0 10px;
+        height:65px;
+    }
+
+    .composer-wrap{
+        padding:8px;
+    }
+
+    .status-view{
+        padding:14px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<!-- AUTH -->
+<section id="authScreen" class="auth">
+    <div class="auth-card">
+
+        <div class="logo">
+            <div class="logo-mark">
+                <i data-lucide="message-circle"></i>
+            </div>
+            MesajX
+        </div>
+
+        <p class="auth-sub">
+            Gerçek kişilerle özel ve güvenli mesajlaş.
+        </p>
+
+        <form id="loginForm">
+            <div class="field">
+                <label>Kullanıcı adı</label>
+                <input id="loginUsername" autocomplete="username" required>
+            </div>
+
+            <div class="field">
+                <label>PIN / Şifre</label>
+                <input id="loginPin" type="password" autocomplete="current-password" required>
+            </div>
+
+            <button class="primary">Giriş Yap</button>
+        </form>
+
+        <form id="registerForm" class="hidden">
+            <div class="field">
+                <label>Kullanıcı adı</label>
+                <input id="registerUsername" required minlength="3">
+            </div>
+
+            <div class="field">
+                <label>PIN / Şifre</label>
+                <input id="registerPin" type="password" required minlength="4">
+            </div>
+
+            <button class="primary">Hesap Oluştur</button>
+        </form>
+
+        <div class="switch-auth">
+            <span id="authText">Hesabın yok mu?</span>
+            <button id="switchAuth">Kayıt ol</button>
+        </div>
+
+    </div>
+</section>
+
+
+<!-- APP -->
+<section id="app" class="app hidden">
+
+    <aside id="sidebar" class="sidebar">
+
+        <div class="profile-mini">
+            <div id="miniAvatar" class="avatar">M</div>
+
+            <div class="profile-info">
+                <div id="miniName" class="profile-name">Kullanıcı</div>
+                <div id="miniCode" class="profile-code">TRK-000000</div>
+            </div>
+
+            <button id="profileButton" class="icon-btn" title="Profil">
+                <i data-lucide="user"></i>
+            </button>
+
+            <button id="settingsButton" class="icon-btn" title="Ayarlar">
+                <i data-lucide="settings"></i>
+            </button>
+        </div>
+
+        <div class="search-box">
+            <i class="search-icon" data-lucide="search"></i>
+            <input id="chatSearch" placeholder="Sohbetlerde ara...">
+        </div>
+
+        <div class="sidebar-actions">
+            <button id="addPersonButton" class="action-btn">
+                <i data-lucide="user-plus"></i>
+                Kişi Ekle
+            </button>
+
+            <button id="newGroupButton" class="action-btn">
+                <i data-lucide="users"></i>
+                Grup
+            </button>
+        </div>
+
+        <div id="chatList" class="chat-list"></div>
+
+    </aside>
+
+
+    <main class="main">
+
+        <header class="topbar">
+
+            <button id="mobileMenu" class="icon-btn">
+                <i data-lucide="menu"></i>
+            </button>
+
+            <div id="chatHeader" class="chat-title">
+                <strong>Mesajlar</strong>
+                <small>Bir kişi seç</small>
+            </div>
+
+            <button id="statusButton" class="icon-btn" title="Durumlar">
+                <i data-lucide="circle-play"></i>
+            </button>
+
+            <button id="chatOptions" class="icon-btn hidden">
+                <i data-lucide="more-vertical"></i>
+            </button>
+
+        </header>
+
+
+        <section id="messagesView" class="messages">
+
+            <div class="empty">
+                <div class="empty-box">
+                    <div class="big-icon">
+                        <i data-lucide="message-square"></i>
+                    </div>
+
+                    <h2>Özel mesajlaşma</h2>
+
+                    <p>
+                        Mesaj göndermek için önce kişinin benzersiz
+                        koduyla onu ekle.
+                    </p>
+                </div>
+            </div>
+
+        </section>
+
+
+        <section id="statusView" class="status-view hidden">
+
+            <div style="max-width:1000px;margin:auto;display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+                <div>
+                    <h2>Durumlar</h2>
+                    <p style="color:var(--muted);margin-top:4px;">
+                        Fotoğraf, video veya yazı paylaş.
+                    </p>
+                </div>
+
+                <button id="createStatusButton" class="action-btn">
+                    <i data-lucide="plus"></i>
+                    Durum
+                </button>
+            </div>
+
+            <div id="statusGrid" class="status-grid"></div>
+
+        </section>
+
+
+        <div id="composerWrap" class="composer-wrap hidden">
+
+            <div style="position:relative;max-width:950px;margin:auto;">
+
+                <div id="emojiPanel" class="emoji-panel">
+
+                    <input
+                        id="emojiSearch"
+                        class="emoji-search"
+                        placeholder="Emoji ara..."
+                    >
+
+                    <div id="emojiTabs" class="emoji-tabs"></div>
+
+                    <div id="emojiGrid" class="emoji-grid"></div>
+
+                </div>
+
+                <div class="composer">
+
+                    <button id="emojiButton" class="attach-btn" title="Emoji">
+                        <i data-lucide="smile"></i>
+                    </button>
+
+                    <button id="fileButton" class="attach-btn" title="Dosya">
+                        <i data-lucide="paperclip"></i>
+                    </button>
+
+                    <input
+                        id="fileInput"
+                        type="file"
+                        class="hidden"
+                    >
+
+                    <textarea
+                        id="messageInput"
+                        placeholder="Mesaj yaz..."
+                        rows="1"
+                    ></textarea>
+
+                    <button id="sendButton" class="send-btn">
+                        <i data-lucide="send"></i>
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+
+    <nav class="mobile-nav">
+
+        <button id="mobileChats" class="active">
+            <i data-lucide="message-circle"></i>
+            Sohbetler
+        </button>
+
+        <button id="mobilePeople">
+            <i data-lucide="user-plus"></i>
+            Kişiler
+        </button>
+
+        <button id="mobileStatus">
+            <i data-lucide="circle-play"></i>
+            Durum
+        </button>
+
+        <button id="mobileProfile">
+            <i data-lucide="user"></i>
+            Profil
+        </button>
+
+    </nav>
+
+</section>
+
+
+<!-- ADD PERSON MODAL -->
+
+<div id="personModal" class="modal-layer">
+
+    <div class="modal">
+
+        <div class="modal-head">
+            <h2>Kişi Ekle</h2>
+
+            <button class="modal-close" data-close="personModal">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+
+        <p style="color:var(--muted);font-size:14px;">
+            Kişinin benzersiz MesajX kodunu gir.
+        </p>
+
+        <div class="field" style="margin-top:15px;">
+            <label>Kişi kodu</label>
+            <input id="personCodeInput" placeholder="TRK-8F42K1">
+        </div>
+
+        <button id="findPersonButton" class="primary">
+            Kişiyi Bul
+        </button>
+
+        <div id="personResult"></div>
+
+    </div>
+
+</div>
+
+
+<!-- PROFILE MODAL -->
+
+<div id="profileModal" class="modal-layer">
+
+    <div class="modal">
+
+        <div class="modal-head">
+            <h2>Profilim</h2>
+
+            <button class="modal-close" data-close="profileModal">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+
+        <div class="profile-large">
+
+            <div id="profileAvatar" class="avatar">M</div>
+
+            <div style="margin-top:12px;">
+                <h2 id="profileName">Kullanıcı</h2>
+                <p id="profileUsername" style="color:var(--muted);"></p>
+            </div>
+
+        </div>
+
+        <div class="code-box">
+            <span class="code" id="profileCode">TRK-000000</span>
+
+            <button id="copyCode" class="icon-btn">
+                <i data-lucide="copy"></i>
+            </button>
+        </div>
+
+        <div class="field" style="margin-top:16px;">
+            <label>Durum yazısı</label>
+            <input id="bioInput" placeholder="Merhaba!">
+        </div>
+
+        <div class="modal-actions">
+            <button id="saveProfile" class="primary">
+                Kaydet
+            </button>
+
+            <button id="logoutButton" class="danger">
+                Çıkış
+            </button>
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- CHAT OPTIONS -->
+
+<div id="chatOptionsModal" class="modal-layer">
+
+    <div class="modal">
+
+        <div class="modal-head">
+            <h2>Sohbet seçenekleri</h2>
+
+            <button class="modal-close" data-close="chatOptionsModal">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+
+        <button id="muteChatButton" class="action-btn" style="width:100%;margin-bottom:8px;">
+            <i data-lucide="volume-x"></i>
+            Sohbeti Sessize Al
+        </button>
+
+        <button id="archiveChatButton" class="action-btn" style="width:100%;margin-bottom:8px;">
+            <i data-lucide="archive"></i>
+            Arşivle
+        </button>
+
+        <button id="blockUserButton" class="action-btn danger" style="width:100%;margin-bottom:8px;">
+            <i data-lucide="ban"></i>
+            Kişiyi Engelle
+        </button>
+
+        <button id="deleteChatButton" class="action-btn danger" style="width:100%;">
+            <i data-lucide="trash-2"></i>
+            Sohbeti Sil
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- SECURITY MODAL -->
+
+<div id="securityModal" class="modal-layer">
+
+    <div class="modal">
+
+        <div class="modal-head">
+            <h2>Güvenlik taraması</h2>
+
+            <button class="modal-close" data-close="securityModal">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+
+        <div id="securityResult"></div>
+
+        <div class="modal-actions">
+            <button id="securityCancel" class="secondary">
+                İptal
+            </button>
+
+            <button id="securityContinue" class="primary">
+                Devam Et
+            </button>
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- STATUS MODAL -->
+
+<div id="statusModal" class="modal-layer">
+
+    <div class="modal">
+
+        <div class="modal-head">
+            <h2>Yeni Durum</h2>
+
+            <button class="modal-close" data-close="statusModal">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+
+        <div class="field">
+            <label>Yazı</label>
+            <textarea
+                id="statusText"
+                rows="4"
+                placeholder="Bugün nasıl gidiyor?"
+                style="width:100%;background:#090d13;color:white;border:1px solid var(--line);border-radius:14px;padding:12px;outline:none;"
+            ></textarea>
+        </div>
+
+        <div class="field">
+            <label>Fotoğraf / Video</label>
+            <input id="statusFile" type="file" accept="image/*,video/*">
+        </div>
+
+        <button id="publishStatus" class="primary">
+            Durumu Paylaş
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- GROUP MODAL -->
+
+<div id="groupModal" class="modal-layer">
+
+    <div class="modal">
+
+        <div class="modal-head">
+            <h2>Yeni Grup</h2>
+
+            <button class="modal-close" data-close="groupModal">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+
+        <div class="field">
+            <label>Grup adı</label>
+            <input id="groupNameInput" placeholder="Arkadaşlar">
+        </div>
+
+        <div class="field">
+            <label>Üye kodları</label>
+            <textarea
+                id="groupMembersInput"
+                rows="4"
+                placeholder="TRK-123456&#10;TRK-ABC123"
+                style="width:100%;background:#090d13;color:white;border:1px solid var(--line);border-radius:14px;padding:12px;outline:none;"
+            ></textarea>
+        </div>
+
+        <button id="createGroupButton" class="primary">
+            Grubu Oluştur
+        </button>
+
+    </div>
+
+</div>
+
+
+<div id="toastContainer" class="toast-container"></div>
+
+
+<script>
+/* =========================================================
+   MESAJX FRONTEND
+   ========================================================= */
+
+const state = {
+    token: localStorage.getItem("mesajx_token"),
+    me: JSON.parse(localStorage.getItem("mesajx_me") || "null"),
+    socket: null,
+    chats: [],
+    activeChat: null,
+    messages: {},
+    blocked: JSON.parse(localStorage.getItem("mesajx_blocked") || "[]"),
+    muted: JSON.parse(localStorage.getItem("mesajx_muted") || "[]"),
+    archived: JSON.parse(localStorage.getItem("mesajx_archived") || "[]"),
+    pendingSecurity: null,
+    statuses: JSON.parse(localStorage.getItem("mesajx_statuses") || "[]")
+};
+
+const $ = id => document.getElementById(id);
+
+function icons(){
+    if(window.lucide) lucide.createIcons();
+}
+
+function escapeHTML(value){
+    return String(value ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+}
+
+function toast(text){
+    const el = document.createElement("div");
+    el.className = "toast";
+    el.textContent = text;
+
+    $("toastContainer").appendChild(el);
+
+    setTimeout(() => {
+        el.remove();
+    }, 3200);
+}
+
+function openModal(id){
+    $(id).classList.add("show");
+}
+
+function closeModal(id){
+    $(id).classList.remove("show");
+}
+
+document.querySelectorAll("[data-close]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+        closeModal(btn.dataset.close);
+    });
+});
+
+
+/* =========================================================
+   AUTH
+   ========================================================= */
+
+$("switchAuth").onclick = () => {
+
+    $("loginForm").classList.toggle("hidden");
+    $("registerForm").classList.toggle("hidden");
+
+    const register = !$("registerForm").classList.contains("hidden");
+
+    $("authText").textContent =
+        register ? "Zaten hesabın var mı?" : "Hesabın yok mu?";
+
+    $("switchAuth").textContent =
+        register ? "Giriş yap" : "Kayıt ol";
+};
+
+
+async function authRequest(url, data){
+
+    const response = await fetch(url,{
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json"
+        },
+        body:JSON.stringify(data)
+    });
+
+    const result = await response.json().catch(()=>({}));
+
+    if(!response.ok){
+        throw new Error(result.error || "İşlem başarısız.");
+    }
+
+    return result;
+}
+
+
+$("loginForm").addEventListener("submit", async e=>{
+
+    e.preventDefault();
+
+    try{
+
+        const result = await authRequest("/api/login",{
+            username:$("loginUsername").value.trim(),
+            pin:$("loginPin").value
+        });
+
+        await completeLogin(result);
+
+    }catch(error){
+        toast(error.message);
+    }
+});
+
+
+$("registerForm").addEventListener("submit", async e=>{
+
+    e.preventDefault();
+
+    try{
+
+        const result = await authRequest("/api/register",{
+            username:$("registerUsername").value.trim(),
+            pin:$("registerPin").value
+        });
+
+        await completeLogin(result);
+
+    }catch(error){
+        toast(error.message);
+    }
+});
+
+
+async function completeLogin(result){
+
+    state.token = result.token || result.sessionToken || result.session;
+
+    state.me =
+        result.user ||
+        result.account ||
+        {
+            username:$("loginUsername").value.trim()
+        };
+
+    if(!state.token){
+        throw new Error("Sunucu oturum anahtarı göndermedi.");
+    }
+
+    localStorage.setItem("mesajx_token",state.token);
+    localStorage.setItem("mesajx_me",JSON.stringify(state.me));
+
+    $("authScreen").classList.add("hidden");
+    $("app").classList.remove("hidden");
+
+    setupUserUI();
+    connectSocket();
+
+    toast("Hoş geldin 👋");
+}
+
+
+function logout(){
+
+    try{
+        state.socket?.disconnect();
+    }catch{}
+
+    localStorage.removeItem("mesajx_token");
+    localStorage.removeItem("mesajx_me");
+
+    location.reload();
+}
+
+
+$("logoutButton").onclick = logout;
+
+
+/* =========================================================
+   USER
+   ========================================================= */
+
+function setupUserUI(){
+
+    const name =
+        state.me.displayName ||
+        state.me.name ||
+        state.me.username ||
+        "Kullanıcı";
+
+    const code =
+        state.me.code ||
+        state.me.userCode ||
+        generateLocalCode();
+
+    state.me.code = code;
+
+    localStorage.setItem("mesajx_me",JSON.stringify(state.me));
+
+    $("miniName").textContent = name;
+    $("miniCode").textContent = code;
+
+    $("profileName").textContent = name;
+    $("profileUsername").textContent =
+        "@" + (state.me.username || "");
+
+    $("profileCode").textContent = code;
+
+    const letter =
+        name.trim().charAt(0).toUpperCase() || "M";
+
+    $("miniAvatar").textContent = letter;
+    $("profileAvatar").textContent = letter;
+
+    $("bioInput").value = state.me.bio || "";
+
+    icons();
+}
+
+
+function generateLocalCode(){
+
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+    let code = "TRK-";
+
+    for(let i=0;i<6;i++){
+        code += chars[Math.floor(Math.random()*chars.length)];
+    }
+
+    return code;
+}
+
+
+$("profileButton").onclick = ()=>{
+    openModal("profileModal");
+};
+
+
+$("copyCode").onclick = async ()=>{
+
+    await navigator.clipboard.writeText(
+        $("profileCode").textContent
+    );
+
+    toast("Kod kopyalandı.");
+};
+
+
+$("saveProfile").onclick = ()=>{
+
+    state.me.bio = $("bioInput").value.trim();
+
+    localStorage.setItem(
+        "mesajx_me",
+        JSON.stringify(state.me)
+    );
+
+    setupUserUI();
+
+    closeModal("profileModal");
+
+    toast("Profil kaydedildi.");
+};
+
+
+/* =========================================================
+   SOCKET
+   ========================================================= */
+
+function connectSocket(){
+
+    if(!window.io){
+        toast("Socket.IO yüklenemedi.");
+        return;
+    }
+
+    state.socket = io({
+        transports:["websocket","polling"]
+    });
+
+    const socket = state.socket;
+
+    socket.on("connect",()=>{
+
+        socket.emit(
+            "authenticate",
+            {token:state.token},
+            response=>{
+                if(response?.success === false){
+                    toast(response.error || "Oturum doğrulanamadı.");
+                    return;
+                }
+
+                loadChats();
+            }
+        );
+
+    });
+
+
+    socket.on("connect_error",()=>{
+        toast("Sunucu bağlantısı kurulamadı.");
+    });
+
+
+    /*
+      Farklı server sürümleri için birkaç olası
+      mesaj event adını dinliyoruz.
+    */
+
+    [
+        "new_message",
+        "message",
+        "message_received"
+    ].forEach(eventName=>{
+
+        socket.on(eventName,message=>{
+
+            const normalized = normalizeMessage(message);
+
+            if(!normalized.chatId) return;
+
+            if(!state.messages[normalized.chatId]){
+                state.messages[normalized.chatId] = [];
+            }
+
+            state.messages[normalized.chatId].push(normalized);
+
+            if(
+                state.activeChat &&
+                state.activeChat.id === normalized.chatId
+            ){
+                renderMessages();
+            }
+
+            renderChats();
+        });
+
+    });
+
+
+    socket.on("typing",data=>{
+
+        if(
+            state.activeChat &&
+            data?.chatId === state.activeChat.id
+        ){
+
+            $("chatHeader").querySelector("small").textContent =
+                data.typing
+                ? "yazıyor..."
+                : "çevrimiçi";
+        }
+
+    });
+
+
+    socket.on("presence",data=>{
+
+        if(
+            state.activeChat &&
+            data?.userId === state.activeChat.userId
+        ){
+            updateChatStatus(data);
+        }
+
+    });
+
+}
+
+
+function normalizeMessage(message){
+
+    return {
+        id:
+            message.id ||
+            message.messageId ||
+            crypto.randomUUID(),
+
+        chatId:
+            message.chatId ||
+            message.chat_id,
+
+        senderId:
+            message.senderId ||
+            message.sender_id ||
+            message.userId,
+
+        text:
+            message.text ||
+            message.content ||
+            "",
+
+        createdAt:
+            message.createdAt ||
+            message.created_at ||
+            Date.now(),
+
+        edited:
+            !!message.edited,
+
+        reactions:
+            message.reactions || {}
+    };
+}
+
+
+/* =========================================================
+   CHATS
+   ========================================================= */
+
+function loadChats(){
+
+    if(!state.socket) return;
+
+    state.socket.emit(
+        "get_chats",
+        {},
+        result=>{
+
+            state.chats =
+                Array.isArray(result)
+                ? result
+                : result?.chats || [];
+
+            renderChats();
+
+        }
+    );
+}
+
+
+function renderChats(){
+
+    const list = $("chatList");
+
+    list.innerHTML = "";
+
+    if(!state.chats.length){
+
+        list.innerHTML = `
+            <div style="
+                text-align:center;
+                color:#6f7b8d;
+                padding:30px 15px;
+                font-size:13px;
+            ">
+                Henüz sohbet yok.<br>
+                Kişi koduyla birini ekle.
+            </div>
+        `;
+
+        return;
+    }
+
+
+    state.chats
+        .filter(chat=>!state.archived.includes(chat.id))
+        .forEach(chat=>{
+
+            const other =
+                chat.otherUser ||
+                chat.user ||
+                chat.members?.find(
+                    m => String(m.id) !== String(state.me.id)
+                ) ||
+                {};
+
+            const name =
+                chat.name ||
+                other.displayName ||
+                other.name ||
+                other.username ||
+                "Sohbet";
+
+            const messages =
+                state.messages[chat.id] || [];
+
+            const last =
+                messages[messages.length-1];
+
+            const item = document.createElement("div");
+
+            item.className =
+                "chat-item " +
+                (
+                    state.activeChat?.id === chat.id
+                    ? "active"
+                    : ""
+                );
+
+            item.innerHTML = `
+                <div class="avatar">
+                    ${escapeHTML(
+                        name.charAt(0).toUpperCase()
+                    )}
+                </div>
+
+                <div class="chat-content">
+
+                    <div class="chat-top">
+
+                        <div class="chat-name">
+                            ${escapeHTML(name)}
+                        </div>
+
+                        <div class="chat-time">
+                            ${last ? formatTime(last.createdAt) : ""}
+                        </div>
+
+                    </div>
+
+                    <div class="chat-preview">
+                        ${last
+                            ? escapeHTML(last.text || "Ek")
+                            : "Yeni sohbet"}
+                    </div>
+
+                </div>
+            `;
+
+            item.onclick = ()=>openChat(chat);
+
+            list.appendChild(item);
+
+        });
+
+    icons();
+}
+
+
+async function openChat(chat){
+
+    state.activeChat = chat;
+
+    $("statusView").classList.add("hidden");
+    $("messagesView").classList.remove("hidden");
+    $("composerWrap").classList.remove("hidden");
+    $("chatOptions").classList.remove("hidden");
+
+    const other =
+        chat.otherUser ||
+        chat.user ||
+        {};
+
+    const name =
+        chat.name ||
+        other.displayName ||
+        other.name ||
+        other.username ||
+        "Sohbet";
+
+    $("chatHeader").innerHTML = `
+        <strong>${escapeHTML(name)}</strong>
+        <small>çevrimiçi</small>
+    `;
+
+    renderChats();
+
+    if(!state.messages[chat.id]){
+
+        state.messages[chat.id] = [];
+
+        state.socket.emit(
+            "get_messages",
+            {chatId:chat.id},
+            result=>{
+
+                const list =
+                    Array.isArray(result)
+                    ? result
+                    : result?.messages || [];
+
+                state.messages[chat.id] =
+                    list.map(normalizeMessage);
+
+                renderMessages();
+
+            }
+        );
+
+    }else{
+        renderMessages();
+    }
+
+    if(window.innerWidth <= 800){
+        $("sidebar").classList.remove("mobile-open");
+    }
+}
+
+
+function renderMessages(){
+
+    const view = $("messagesView");
+
+    const list =
+        state.messages[state.activeChat?.id] || [];
+
+    if(!list.length){
+
+        view.innerHTML = `
+            <div class="empty">
+                <div class="empty-box">
+                    <div class="big-icon">
+                        <i data-lucide="message-circle"></i>
+                    </div>
+
+                    <h2>Yeni sohbet</h2>
+
+                    <p>
+                        Bu sohbet sadece bu sohbetin
+                        üyelerine aittir.
+                    </p>
+                </div>
+            </div>
+        `;
+
+        icons();
+
+        return;
+    }
+
+
+    view.innerHTML = "";
+
+    list.forEach(message=>{
+
+        const mine =
+            String(message.senderId) ===
+            String(state.me.id || state.me.userId);
+
+        const row = document.createElement("div");
+
+        row.className =
+            "message-row " +
+            (mine ? "mine" : "");
+
+
+        const reactions =
+            Object.entries(message.reactions || {})
+                .map(([emoji,count])=>`
+                    <span class="reaction">
+                        ${escapeHTML(emoji)} ${count}
+                    </span>
+                `)
+                .join("");
+
+
+        row.innerHTML = `
+
+            <div class="message">
+
+                <div class="message-tools">
+
+                    <button
+                        title="Tepki"
+                        onclick="quickReact('${message.id}','❤️')"
+                    >♥</button>
+
+                    ${
+                        mine
+                        ? `
+                        <button
+                            title="Düzenle"
+                            onclick="editMessage('${message.id}')"
+                        >
+                            ✎
+                        </button>
+
+                        <button
+                            title="Sil"
+                            onclick="deleteMessage('${message.id}')"
+                        >
+                            ×
+                        </button>
+                        `
+                        : ""
+                    }
+
+                </div>
+
+                <div class="bubble">
+                    ${escapeHTML(message.text)}
+                </div>
+
+                ${
+                    reactions
+                    ? `<div class="reactions">${reactions}</div>`
+                    : ""
+                }
+
+                <div class="message-meta">
+                    ${formatTime(message.createdAt)}
+                    ${mine ? "✓✓" : ""}
+                </div>
+
+            </div>
+        `;
+
+        view.appendChild(row);
+
+    });
+
+    view.scrollTop = view.scrollHeight;
+
+    icons();
+}
+
+
+function formatTime(time){
+
+    const date = new Date(time);
+
+    if(Number.isNaN(date.getTime())){
+        return "";
+    }
+
+    return date.toLocaleTimeString(
+        "tr-TR",
+        {
+            hour:"2-digit",
+            minute:"2-digit"
+        }
+    );
+}
+
+
+/* =========================================================
+   SEND
+   ========================================================= */
+
+$("sendButton").onclick = sendMessage;
+
+$("messageInput").addEventListener("keydown",e=>{
+
+    if(e.key === "Enter" && !e.shiftKey){
+
+        e.preventDefault();
+
+        sendMessage();
+    }
+
+});
+
+
+$("messageInput").addEventListener("input",()=>{
+
+    if(
+        state.socket &&
+        state.activeChat
+    ){
+
+        state.socket.emit(
+            "typing",
+            {
+                chatId:state.activeChat.id,
+                typing:$("messageInput").value.length > 0
+            }
+        );
+
+    }
+
+});
+
+
+function sendMessage(){
+
+    if(!state.activeChat){
+        toast("Önce bir sohbet seç.");
+        return;
+    }
+
+    const text =
+        $("messageInput").value.trim();
+
+    if(!text) return;
+
+
+    /*
+      ÖNEMLİ:
+      Mesajın chatId'si vardır.
+      Sunucu bunu sohbet üyeleri dışında
+      başka kullanıcıya göndermemelidir.
+    */
+
+    const payload = {
+        chatId:state.activeChat.id,
+        text
+    };
+
+
+    state.socket.emit(
+        "send_message",
+        payload,
+        response=>{
+
+            if(response?.success === false){
+
+                toast(
+                    response.error ||
+                    "Mesaj gönderilemedi."
+                );
+
+                return;
+            }
+
+        }
+    );
+
+
+    $("messageInput").value = "";
+    $("messageInput").style.height = "auto";
+}
+
+
+window.quickReact = function(messageId,emoji){
+
+    if(!state.activeChat) return;
+
+    state.socket.emit(
+        "react_message",
+        {
+            chatId:state.activeChat.id,
+            messageId,
+            emoji
+        }
+    );
+
+};
+
+
+window.editMessage = function(messageId){
+
+    const list =
+        state.messages[state.activeChat.id] || [];
+
+    const message =
+        list.find(x=>x.id === messageId);
+
+    if(!message) return;
+
+    const newText =
+        prompt("Mesajı düzenle:",message.text);
+
+    if(!newText || !newText.trim()) return;
+
+    state.socket.emit(
+        "edit_message",
+        {
+            chatId:state.activeChat.id,
+            messageId,
+            text:newText.trim()
+        }
+    );
+
+};
+
+
+window.deleteMessage = function(messageId){
+
+    if(!confirm("Bu mesaj silinsin mi?")) return;
+
+    state.socket.emit(
+        "delete_message",
+        {
+            chatId:state.activeChat.id,
+            messageId
+        }
+    );
+
+};
+
+
+/* =========================================================
+   ADD PERSON
+   ========================================================= */
+
+$("addPersonButton").onclick = ()=>{
+    $("personCodeInput").value = "";
+    $("personResult").innerHTML = "";
+    openModal("personModal");
+};
+
+
+$("findPersonButton").onclick = ()=>{
+
+    const code =
+        $("personCodeInput").value
+            .trim()
+            .toUpperCase();
+
+    if(!code){
+        toast("Kişi kodunu yaz.");
+        return;
+    }
+
+    if(
+        state.me.code &&
+        code === state.me.code
+    ){
+        toast("Kendi kodunu ekleyemezsin.");
+        return;
+    }
+
+
+    if(!state.socket){
+        toast("Sunucu bağlantısı yok.");
+        return;
+    }
+
+
+    $("personResult").innerHTML = `
+        <div style="padding:15px;color:#8d98a8;">
+            Kişi aranıyor...
+        </div>
+    `;
+
+
+    state.socket.emit(
+        "search_users",
+        {code},
+        result=>{
+
+            const user =
+                result?.user ||
+                (
+                    Array.isArray(result)
+                    ? result[0]
+                    : null
+                );
+
+
+            if(!user){
+
+                $("personResult").innerHTML = `
+                    <div class="security-box security-risk">
+                        <div class="security-icon">
+                            <i data-lucide="user-x"></i>
+                            Kişi bulunamadı
+                        </div>
+
+                        <div class="security-details">
+                            Kodun doğru yazıldığından emin ol.
+                        </div>
+                    </div>
+                `;
+
+                icons();
+
+                return;
+            }
+
+
+            $("personResult").innerHTML = `
+
+                <div class="person-card">
+
+                    <div class="avatar">
+                        ${escapeHTML(
+                            (
+                                user.displayName ||
+                                user.username ||
+                                "?"
+                            ).charAt(0).toUpperCase()
+                        )}
+                    </div>
+
+                    <div class="person-card-info">
+
+                        <strong>
+                            ${escapeHTML(
+                                user.displayName ||
+                                user.username
+                            )}
+                        </strong>
+
+                        <small>
+                            ${escapeHTML(
+                                user.code || code
+                            )}
+                        </small>
+
+                    </div>
+
+                    <button
+                        id="startPrivateChat"
+                        class="primary"
+                        style="width:auto;padding:10px 13px;"
+                    >
+                        Sohbet
+                    </button>
+
+                </div>
+            `;
+
+            icons();
+
+
+            $("startPrivateChat").onclick = ()=>{
+
+                state.socket.emit(
+                    "create_chat",
+                    {
+                        type:"private",
+                        memberCode:
+                            user.code || code,
+                        members:[
+                            user.id ||
+                            user.userId
+                        ]
+                    },
+                    result=>{
+
+                        const chat =
+                            result?.chat ||
+                            result;
+
+                        if(!chat){
+                            toast("Sohbet oluşturulamadı.");
+                            return;
+                        }
+
+                        closeModal("personModal");
+
+                        state.chats.push(chat);
+
+                        renderChats();
+
+                        openChat(chat);
+
+                    }
+                );
+
+            };
+
+        }
+    );
+
+};
+
+
+/* =========================================================
+   CHAT OPTIONS
+   ========================================================= */
+
+$("chatOptions").onclick = ()=>{
+
+    if(!state.activeChat) return;
+
+    openModal("chatOptionsModal");
+};
+
+
+$("muteChatButton").onclick = ()=>{
+
+    if(!state.activeChat) return;
+
+    const id = state.activeChat.id;
+
+    if(state.muted.includes(id)){
+        state.muted =
+            state.muted.filter(x=>x!==id);
+
+        toast("Sohbet sessizden çıkarıldı.");
+    }else{
+        state.muted.push(id);
+
+        toast("Sohbet sessize alındı.");
+    }
+
+    localStorage.setItem(
+        "mesajx_muted",
+        JSON.stringify(state.muted)
+    );
+
+    closeModal("chatOptionsModal");
+};
+
+
+$("archiveChatButton").onclick = ()=>{
+
+    if(!state.activeChat) return;
+
+    const id = state.activeChat.id;
+
+    if(!state.archived.includes(id)){
+        state.archived.push(id);
+    }
+
+    localStorage.setItem(
+        "mesajx_archived",
+        JSON.stringify(state.archived)
+    );
+
+    state.activeChat = null;
+
+    $("composerWrap").classList.add("hidden");
+    $("chatOptions").classList.add("hidden");
+
+    renderChats();
+
+    closeModal("chatOptionsModal");
+
+    toast("Sohbet arşivlendi.");
+};
+
+
+$("blockUserButton").onclick = ()=>{
+
+    if(!state.activeChat) return;
+
+    const userId =
+        state.activeChat.userId ||
+        state.activeChat.otherUser?.id;
+
+    if(!userId){
+        toast("Kullanıcı bilgisi bulunamadı.");
+        return;
+    }
+
+    if(!state.blocked.includes(userId)){
+        state.blocked.push(userId);
+    }
+
+    localStorage.setItem(
+        "mesajx_blocked",
+        JSON.stringify(state.blocked)
+    );
+
+
+    if(state.socket){
+
+        state.socket.emit(
+            "block_user",
+            {
+                userId
+            }
+        );
+
+    }
+
+    closeModal("chatOptionsModal");
+
+    toast("Kişi engellendi.");
+
+};
+
+
+$("deleteChatButton").onclick = ()=>{
+
+    if(!state.activeChat) return;
+
+    if(
+        !confirm(
+            "Bu sohbeti listenden kaldırmak istiyor musun?"
+        )
+    ) return;
+
+    state.socket.emit(
+        "delete_chat",
+        {
+            chatId:state.activeChat.id
+        }
+    );
+
+    state.chats =
+        state.chats.filter(
+            c=>c.id !== state.activeChat.id
+        );
+
+    state.activeChat = null;
+
+    $("composerWrap").classList.add("hidden");
+    $("chatOptions").classList.add("hidden");
+
+    renderChats();
+
+    closeModal("chatOptionsModal");
+};
+
+
+/* =========================================================
+   EMOJI SYSTEM
+   ========================================================= */
+
+const emojiCategories = {
+
+    "Son":[
+        "😀","😂","🤣","😊","😍","🥳","😎","😭","😡","❤️","🔥","👍","👎","👏","🎉"
+    ],
+
+    "Yüzler":[
+        "😀","😃","😄","😁","😆","😅","😂","🤣",
+        "😊","😇","🙂","🙃","😉","😌","😍","🥰",
+        "😘","😗","😙","😚","😋","😛","😝","😜",
+        "🤪","🤨","🧐","🤓","😎","🤩","🥳","😏",
+        "😒","😞","😔","😟","😕","🙁","☹️","😣",
+        "😖","😫","😩","🥺","😢","😭","😤","😠",
+        "😡","🤬","🤯","😳","🥵","🥶","😱","😨",
+        "😰","😥","😓","🤗","🤔","🫡","🤭","🤫"
+    ],
+
+    "Kalpler":[
+        "❤️","🧡","💛","💚","💙","💜","🖤","🤍",
+        "🤎","💔","❤️‍🔥","❣️","💕","💞","💓","💗",
+        "💖","💘","💝","💟"
+    ],
+
+    "El":[
+        "👍","👎","👏","🙌","🫶","🤝","🙏","💪",
+        "👋","🤚","✋","🖐️","👌","✌️","🤞","🤟",
+        "🤘","🤙","👈","👉","☝️","👇","✍️"
+    ],
+
+    "Eğlence":[
+        "🎉","🎊","🔥","✨","⭐","🌟","💫","💥",
+        "🎮","🎯","🏆","🥇","🚀","⚡","💎","🎵",
+        "🎧","🎬","📸","🎨","🧩","🎲"
+    ]
+};
+
+
+function setupEmoji(){
+
+    const tabs = $("emojiTabs");
+
+    tabs.innerHTML = "";
+
+    Object.keys(emojiCategories).forEach(category=>{
+
+        const button = document.createElement("button");
+
+        button.textContent =
+            category === "Son"
+            ? "🕘"
+            : category === "Yüzler"
+            ? "😀"
+            : category === "Kalpler"
+            ? "❤️"
+            : category === "El"
+            ? "👍"
+            : "🎉";
+
+        button.onclick = ()=>{
+            renderEmojiCategory(category);
+        };
+
+        tabs.appendChild(button);
+
+    });
+
+    renderEmojiCategory("Son");
+}
+
+
+function renderEmojiCategory(category){
+
+    const grid = $("emojiGrid");
+
+    grid.innerHTML = "";
+
+    const search =
+        $("emojiSearch").value
+            .trim()
+            .toLowerCase();
+
+    let emojis =
+        emojiCategories[category] || [];
+
+    if(search){
+        /*
+          Emoji'nin Unicode adı tarayıcıdan
+          güvenilir şekilde alınamadığı için
+          arama temel olarak emoji karakterlerini
+          filtrelemek yerine kategori içinde
+          çalışır.
+        */
+        emojis =
+            emojis.filter(
+                e=>e.includes(search)
+            );
+    }
+
+
+    emojis.forEach(emoji=>{
+
+        const button = document.createElement("button");
+
+        button.textContent = emoji;
+
+        button.onclick = ()=>{
+
+            const input = $("messageInput");
+
+            const start = input.selectionStart;
+            const end = input.selectionEnd;
+
+            input.value =
+                input.value.slice(0,start) +
+                emoji +
+                input.value.slice(end);
+
+            input.focus();
+
+            input.selectionStart =
+                input.selectionEnd =
+                start + emoji.length;
+
+            closeEmoji();
+
+        };
+
+        grid.appendChild(button);
+
+    });
+
+}
+
+
+function closeEmoji(){
+    $("emojiPanel").classList.remove("show");
+}
+
+
+$("emojiButton").onclick = e=>{
+
+    e.stopPropagation();
+
+    $("emojiPanel").classList.toggle("show");
+
+};
+
+
+document.addEventListener("click",e=>{
+
+    if(
+        !$("emojiPanel").contains(e.target) &&
+        e.target !== $("emojiButton")
+    ){
+        closeEmoji();
+    }
+
+});
+
+
+$("emojiSearch").addEventListener(
+    "input",
+    ()=>{
+        renderEmojiCategory("Yüzler");
+    }
+);
+
+
+/* =========================================================
+   FILE SECURITY
+   ========================================================= */
+
+$("fileButton").onclick = ()=>{
+    $("fileInput").click();
+};
+
+
+$("fileInput").addEventListener("change",async ()=>{
+
+    const file =
+        $("fileInput").files[0];
+
+    if(!file) return;
+
+    const result =
+        await scanFile(file);
+
+    state.pendingSecurity = {
+        type:"file",
+        file,
+        result
+    };
+
+    showSecurityResult(result);
+
+    openModal("securityModal");
+
+});
+
+
+async function scanFile(file){
+
+    const suspiciousExtensions = [
+        ".exe",
+        ".msi",
+        ".bat",
+        ".cmd",
+        ".scr",
+        ".com",
+        ".ps1",
+        ".vbs",
+        ".js",
+        ".jar",
+        ".apk",
+        ".dll",
+        ".hta"
+    ];
+
+    const lower =
+        file.name.toLowerCase();
+
+    const reasons = [];
+
+    if(
+        suspiciousExtensions.some(
+            ext=>lower.endsWith(ext)
+        )
+    ){
+        reasons.push(
+            "Çalıştırılabilir veya komut dosyası türünde."
+        );
+    }
+
+    if(
+        lower.match(
+            /\.(pdf|jpg|jpeg|png|zip|docx?|xlsx?)\.(exe|scr|bat|cmd)$/i
+        )
+    ){
+        reasons.push(
+            "Dosya adı çift uzantı içeriyor."
+        );
+    }
+
+    if(file.size > 100 * 1024 * 1024){
+        reasons.push(
+            "Dosya boyutu 100 MB üzerinde."
+        );
+    }
+
+    /*
+      Bu bir antivirüs değildir.
+      Tarayıcı tarafında temel risk sinyallerini kontrol eder.
+    */
+
+    return {
+        safe:reasons.length === 0,
+        reasons,
+        name:file.name,
+        size:file.size,
+        type:file.type || "Bilinmeyen"
+    };
+}
+
+
+function showSecurityResult(result){
+
+    const box = $("securityResult");
+
+    if(result.safe){
+
+        box.innerHTML = `
+
+            <div class="security-box security-safe">
+
+                <div class="security-icon">
+                    <i data-lucide="shield-check"></i>
+                    Temel güvenlik kontrolü tamamlandı
+                </div>
+
+                <div class="security-details">
+
+                    Dosya:
+                    <strong>${escapeHTML(result.name)}</strong>
+
+                    <br>
+
+                    Tür:
+                    ${escapeHTML(result.type)}
+
+                    <br>
+
+                    Boyut:
+                    ${formatBytes(result.size)}
+
+                    <br><br>
+
+                    Şüpheli dosya uzantısı veya belirgin
+                    risk sinyali tespit edilmedi.
+                    Bu kontrol tam antivirüs taraması değildir.
+
+                </div>
+
+            </div>
+        `;
+
+        $("securityContinue").textContent =
+            "Gönder";
+
+    }else{
+
+        box.innerHTML = `
+
+            <div class="security-box security-risk">
+
+                <div class="security-icon">
+                    <i data-lucide="shield-alert"></i>
+                    Dikkat: risk sinyali bulundu
+                </div>
+
+                <div class="security-details">
+
+                    ${result.reasons
+                        .map(
+                            reason =>
+                            "• " + escapeHTML(reason)
+                        )
+                        .join("<br>")}
+
+                    <br><br>
+
+                    Dosya otomatik olarak çalıştırılmaz.
+                    Devam etmek istemiyorsan iptal edebilirsin.
+
+                </div>
+
+            </div>
+        `;
+
+        $("securityContinue").textContent =
+            "Yine de gönder";
+    }
+
+    icons();
+}
+
+
+$("securityCancel").onclick = ()=>{
+
+    state.pendingSecurity = null;
+
+    $("fileInput").value = "";
+
+    closeModal("securityModal");
+};
+
+
+$("securityContinue").onclick = async ()=>{
+
+    const pending =
+        state.pendingSecurity;
+
+    if(!pending) return;
+
+    if(pending.type === "file"){
+
+        const file = pending.file;
+
+        /*
+          Mevcut server'ın gerçek binary upload endpointi
+          yoksa dosyayı mesaj olarak göndermek yerine
+          güvenli şekilde yerelde önizleme yapıyoruz.
+        */
+
+        const localUrl =
+            URL.createObjectURL(file);
+
+        if(state.activeChat){
+
+            state.socket.emit(
+                "send_message",
+                {
+                    chatId:state.activeChat.id,
+                    text:`📎 ${file.name}`,
+                    attachments:[
+                        {
+                            name:file.name,
+                            type:file.type,
+                            size:file.size,
+                            localPreview:localUrl
+                        }
+                    ]
+                }
+            );
+
+        }
+
+        toast(
+            pending.result.safe
+            ? "Dosya gönderildi."
+            : "Dosya risk uyarısına rağmen gönderildi."
+        );
+
+    }
+
+    state.pendingSecurity = null;
+
+    $("fileInput").value = "";
+
+    closeModal("securityModal");
+};
+
+
+function formatBytes(bytes){
+
+    if(!bytes) return "0 B";
+
+    const units =
+        ["B","KB","MB","GB"];
+
+    const i =
+        Math.floor(
+            Math.log(bytes) /
+            Math.log(1024)
+        );
+
+    return (
+        bytes /
+        Math.pow(1024,i)
+    ).toFixed(1) +
+    " " +
+    units[i];
+}
+
+
+/* =========================================================
+   STATUS
+   ========================================================= */
+
+$("statusButton").onclick = showStatuses;
+
+$("createStatusButton").onclick = ()=>{
+    openModal("statusModal");
+};
+
+
+function showStatuses(){
+
+    $("messagesView").classList.add("hidden");
+    $("composerWrap").classList.add("hidden");
+    $("statusView").classList.remove("hidden");
+    $("chatOptions").classList.add("hidden");
+
+    renderStatuses();
+}
+
+
+function renderStatuses(){
+
+    const grid = $("statusGrid");
+
+    grid.innerHTML = "";
+
+    if(!state.statuses.length){
+
+        grid.innerHTML = `
+            <div style="
+                color:#778395;
+                grid-column:1/-1;
+                text-align:center;
+                padding:60px 20px;
+            ">
+                Henüz durum yok.<br>
+                İlk durumu sen paylaş.
+            </div>
+        `;
+
+        return;
+    }
+
+
+    state.statuses.forEach(status=>{
+
+        const card =
+            document.createElement("div");
+
+        card.className = "status-card";
+
+
+        if(status.dataUrl){
+
+            if(status.type.startsWith("video")){
+
+                card.innerHTML = `
+                    <video
+                        src="${status.dataUrl}"
+                        muted
+                    ></video>
+
+                    <div class="status-gradient"></div>
+
+                    <div class="status-info">
+                        <div class="status-user">
+                            ${escapeHTML(status.user)}
+                        </div>
+
+                        <div class="status-text">
+                            ${escapeHTML(status.text || "")}
+                        </div>
+                    </div>
+                `;
+
+            }else{
+
+                card.innerHTML = `
+                    <img src="${status.dataUrl}">
+
+                    <div class="status-gradient"></div>
+
+                    <div class="status-info">
+                        <div class="status-user">
+                            ${escapeHTML(status.user)}
+                        </div>
+
+                        <div class="status-text">
+                            ${escapeHTML(status.text || "")}
+                        </div>
+                    </div>
+                `;
+
+            }
+
+        }else{
+
+            card.innerHTML = `
+                <div style="
+                    height:100%;
+                    display:flex;
+                    align-items:center;
+                    justify-content:center;
+                    padding:25px;
+                    text-align:center;
+                    font-size:22px;
+                    font-weight:700;
+                    background:
+                    linear-gradient(
+                        135deg,
+                        #172d4e,
+                        #29204b
+                    );
+                ">
+                    ${escapeHTML(status.text || "")}
+                </div>
+
+                <div class="status-gradient"></div>
+
+                <div class="status-info">
+                    <div class="status-user">
+                        ${escapeHTML(status.user)}
+                    </div>
+                </div>
+            `;
+
+        }
+
+
+        grid.appendChild(card);
+
+    });
+
+}
+
+
+$("publishStatus").onclick = async ()=>{
+
+    const text =
+        $("statusText").value.trim();
+
+    const file =
+        $("statusFile").files[0];
+
+
+    if(!text && !file){
+
+        toast("Bir yazı veya medya ekle.");
+
+        return;
+    }
+
+
+    let dataUrl = "";
+
+    if(file){
+
+        if(file.size > 20 * 1024 * 1024){
+
+            toast("Durum dosyası 20 MB'dan küçük olmalı.");
+
+            return;
+        }
+
+        dataUrl =
+            await fileToDataURL(file);
+    }
+
+
+    const status = {
+
+        id:crypto.randomUUID(),
+
+        user:
+            state.me.displayName ||
+            state.me.username ||
+            "Ben",
+
+        text,
+
+        dataUrl,
+
+        type:
+            file?.type || "text",
+
+        createdAt:Date.now()
+
+    };
+
+
+    state.statuses.unshift(status);
+
+    /*
+      Demo/yerel fallback.
+      Gerçek tüm cihazlara durum dağıtımı için
+      server tarafında story/status eventleri gerekir.
+    */
+
+    try{
+
+        localStorage.setItem(
+            "mesajx_statuses",
+            JSON.stringify(
+                state.statuses.slice(0,20)
+            )
+        );
+
+    }catch{
+
+        toast(
+            "Tarayıcı depolama alanı doldu."
+        );
+
+        return;
+    }
+
+
+    $("statusText").value = "";
+    $("statusFile").value = "";
+
+    closeModal("statusModal");
+
+    renderStatuses();
+
+    toast("Durum paylaşıldı.");
+};
+
+
+function fileToDataURL(file){
+
+    return new Promise((resolve,reject)=>{
+
+        const reader = new FileReader();
+
+        reader.onload =
+            ()=>resolve(reader.result);
+
+        reader.onerror =
+            reject;
+
+        reader.readAsDataURL(file);
+
+    });
+
+}
+
+
+/* =========================================================
+   GROUPS
+   ========================================================= */
+
+$("newGroupButton").onclick = ()=>{
+    openModal("groupModal");
+};
+
+
+$("createGroupButton").onclick = ()=>{
+
+    const name =
+        $("groupNameInput").value.trim();
+
+    const codes =
+        $("groupMembersInput")
+            .value
+            .split(/\n|,/)
+            .map(x=>x.trim())
+            .filter(Boolean);
+
+
+    if(!name){
+
+        toast("Grup adı yaz.");
+
+        return;
+    }
+
+
+    if(!codes.length){
+
+        toast("En az bir kişi kodu ekle.");
+
+        return;
+    }
+
+
+    state.socket.emit(
+        "create_chat",
+        {
+            type:"group",
+            name,
+            memberCodes:codes
+        },
+        result=>{
+
+            if(
+                result?.success === false
+            ){
+
+                toast(
+                    result.error ||
+                    "Grup oluşturulamadı."
+                );
+
+                return;
+            }
+
+
+            const chat =
+                result?.chat ||
+                result;
+
+            if(chat){
+
+                state.chats.push(chat);
+
+                renderChats();
+
+                closeModal("groupModal");
+
+                openChat(chat);
+
+                toast("Grup oluşturuldu.");
+            }
+
+        }
+    );
+
+};
+
+
+/* =========================================================
+   SEARCH
+   ========================================================= */
+
+$("chatSearch").addEventListener(
+    "input",
+    ()=>{
+        const q =
+            $("chatSearch").value
+                .trim()
+                .toLowerCase();
+
+        document
+            .querySelectorAll(".chat-item")
+            .forEach(item=>{
+
+                item.style.display =
+                    item.textContent
+                        .toLowerCase()
+                        .includes(q)
+                    ? ""
+                    : "none";
+
+            });
+    }
+);
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+$("mobileMenu").onclick = ()=>{
+
+    $("sidebar")
+        .classList
+        .toggle("mobile-open");
+
+};
+
+
+$("mobileChats").onclick = ()=>{
+
+    $("statusView").classList.add("hidden");
+    $("messagesView").classList.remove("hidden");
+
+    $("sidebar").classList.add("mobile-open");
+
+};
+
+
+$("mobilePeople").onclick = ()=>{
+
+    openModal("personModal");
+
+};
+
+
+$("mobileStatus").onclick = ()=>{
+
+    showStatuses();
+
+};
+
+
+$("mobileProfile").onclick = ()=>{
+
+    openModal("profileModal");
+
+};
+
+
+/* =========================================================
+   SETTINGS
+   ========================================================= */
+
+$("settingsButton").onclick = ()=>{
+
+    toast(
+        "Ayarlar bölümü hazır: bildirim, gizlilik ve güvenlik seçenekleri eklenebilir."
+    );
+
+};
+
+
+/* =========================================================
+   AUTO LOGIN
+   ========================================================= */
+
+if(state.token && state.me){
+
+    $("authScreen").classList.add("hidden");
+    $("app").classList.remove("hidden");
+
+    setupUserUI();
+    connectSocket();
+
+}
+
+
+/* =========================================================
+   INITIALIZE
+   ========================================================= */
+
+setupEmoji();
+icons();
+
+</script>
+
+</body>
+</html>
