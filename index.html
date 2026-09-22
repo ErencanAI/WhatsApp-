@@ -1,0 +1,3733 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+
+<title>MesajX</title>
+
+<script src="/socket.io/socket.io.js"></script>
+
+<style>
+:root{
+    --bg:#05070b;
+    --panel:#0b1017;
+    --panel2:#101720;
+    --line:rgba(255,255,255,.08);
+    --line2:rgba(255,255,255,.14);
+    --text:#f5f7fa;
+    --muted:#8995a6;
+    --accent:#24c8d6;
+    --accent2:#6470f5;
+    --danger:#ff5368;
+    --success:#35d79a;
+}
+
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+}
+
+html,
+body{
+    width:100%;
+    height:100%;
+}
+
+body{
+    overflow:hidden;
+    font-family:
+        Inter,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Arial,
+        sans-serif;
+
+    color:var(--text);
+
+    background:
+        radial-gradient(
+            circle at 80% 0%,
+            rgba(36,200,214,.13),
+            transparent 30%
+        ),
+        radial-gradient(
+            circle at 0% 100%,
+            rgba(100,112,245,.12),
+            transparent 35%
+        ),
+        var(--bg);
+}
+
+button,
+input,
+textarea{
+    font:inherit;
+}
+
+button{
+    cursor:pointer;
+}
+
+.hidden{
+    display:none!important;
+}
+
+/* =========================
+   AUTH
+========================= */
+
+#authScreen{
+    position:fixed;
+    inset:0;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    padding:20px;
+}
+
+.auth-card{
+    width:min(470px,100%);
+
+    padding:32px;
+
+    border:1px solid var(--line2);
+    border-radius:28px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(17,25,35,.97),
+            rgba(7,10,15,.98)
+        );
+
+    box-shadow:
+        0 35px 100px rgba(0,0,0,.5);
+
+    backdrop-filter:blur(30px);
+}
+
+.brand{
+    display:flex;
+    align-items:center;
+    gap:12px;
+
+    margin-bottom:10px;
+}
+
+.brand-icon{
+    width:52px;
+    height:52px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    color:white;
+
+    border-radius:17px;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--accent),
+            var(--accent2)
+        );
+
+    font-size:23px;
+    font-weight:950;
+}
+
+.brand-name{
+    font-size:29px;
+    font-weight:950;
+    letter-spacing:-1px;
+}
+
+.brand-name span{
+    color:var(--accent);
+}
+
+.subtitle{
+    color:var(--muted);
+    font-size:13px;
+    line-height:1.6;
+
+    margin-bottom:22px;
+}
+
+.tabs{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+
+    padding:4px;
+    margin-bottom:18px;
+
+    background:#070a0f;
+
+    border:1px solid var(--line);
+    border-radius:14px;
+}
+
+.tab{
+    height:42px;
+
+    border:0;
+    border-radius:10px;
+
+    color:var(--muted);
+    background:transparent;
+
+    font-weight:850;
+}
+
+.tab.active{
+    color:white;
+    background:#151d27;
+}
+
+.form{
+    display:flex;
+    flex-direction:column;
+    gap:11px;
+}
+
+.field{
+    position:relative;
+}
+
+.field-icon{
+    position:absolute;
+
+    left:15px;
+    top:50%;
+
+    transform:translateY(-50%);
+
+    color:#637083;
+
+    font-size:16px;
+}
+
+.field input{
+    width:100%;
+    height:54px;
+
+    padding:0 15px 0 44px;
+
+    color:white;
+    background:#070b10;
+
+    border:1px solid var(--line);
+    border-radius:15px;
+
+    outline:none;
+}
+
+.field input:focus{
+    border-color:rgba(36,200,214,.5);
+
+    box-shadow:
+        0 0 0 4px
+        rgba(36,200,214,.06);
+}
+
+.primary{
+    width:100%;
+    height:54px;
+
+    margin-top:3px;
+
+    color:#001315;
+
+    border:0;
+    border-radius:15px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #37dce6,
+            #159ba8
+        );
+
+    font-weight:950;
+
+    transition:.2s;
+}
+
+.primary:active{
+    transform:scale(.98);
+}
+
+.primary:disabled{
+    opacity:.6;
+    cursor:not-allowed;
+}
+
+.auth-error{
+    min-height:20px;
+
+    margin-top:11px;
+
+    text-align:center;
+
+    color:var(--danger);
+
+    font-size:12px;
+    line-height:1.5;
+}
+
+.auth-success{
+    margin-top:13px;
+    padding:13px;
+
+    color:#8ff4ce;
+
+    background:rgba(53,215,154,.07);
+
+    border:1px solid rgba(53,215,154,.18);
+
+    border-radius:13px;
+
+    font-size:11px;
+    line-height:1.5;
+}
+
+/* =========================
+   APP
+========================= */
+
+#app{
+    display:none;
+
+    position:fixed;
+    inset:0;
+}
+
+.app{
+    width:100%;
+    height:100%;
+
+    display:grid;
+
+    grid-template-columns:
+        350px
+        minmax(0,1fr)
+        300px;
+}
+
+/* =========================
+   SIDEBAR
+========================= */
+
+.sidebar{
+    display:flex;
+    flex-direction:column;
+
+    min-width:0;
+
+    background:rgba(8,12,18,.97);
+
+    border-right:1px solid var(--line);
+}
+
+.sidebar-top{
+    padding:18px;
+
+    border-bottom:1px solid var(--line);
+}
+
+.me{
+    display:flex;
+    align-items:center;
+    gap:11px;
+}
+
+.avatar{
+    width:46px;
+    height:46px;
+
+    flex:0 0 46px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    color:white;
+
+    border-radius:15px;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--accent),
+            var(--accent2)
+        );
+
+    font-weight:950;
+}
+
+.me-info{
+    min-width:0;
+    flex:1;
+}
+
+.me-name{
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+
+    font-size:14px;
+    font-weight:900;
+}
+
+.me-code{
+    margin-top:3px;
+
+    color:var(--accent);
+
+    font-size:10px;
+    font-weight:900;
+}
+
+.small-button{
+    width:40px;
+    height:40px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    color:#a5b0bf;
+
+    background:#111821;
+
+    border:1px solid var(--line);
+    border-radius:12px;
+}
+
+.search{
+    position:relative;
+
+    margin-top:15px;
+}
+
+.search-icon{
+    position:absolute;
+
+    left:14px;
+    top:50%;
+
+    transform:translateY(-50%);
+
+    color:#647083;
+}
+
+.search input{
+    width:100%;
+    height:44px;
+
+    padding-left:40px;
+
+    color:white;
+
+    background:#070b10;
+
+    border:1px solid var(--line);
+    border-radius:14px;
+
+    outline:none;
+}
+
+.section{
+    padding:15px 18px 8px;
+
+    color:#657184;
+
+    font-size:10px;
+    font-weight:950;
+
+    letter-spacing:1.4px;
+}
+
+.chat-list{
+    flex:1;
+    min-height:0;
+
+    overflow:auto;
+
+    padding:3px 9px 12px;
+}
+
+.chat{
+    position:relative;
+
+    display:flex;
+    align-items:center;
+
+    gap:11px;
+
+    padding:11px;
+
+    border-radius:16px;
+
+    cursor:pointer;
+}
+
+.chat:hover{
+    background:rgba(255,255,255,.035);
+}
+
+.chat.active{
+    background:
+        linear-gradient(
+            90deg,
+            rgba(36,200,214,.12),
+            rgba(36,200,214,.025)
+        );
+}
+
+.chat.active::before{
+    content:"";
+
+    position:absolute;
+
+    left:0;
+    top:12px;
+    bottom:12px;
+
+    width:3px;
+
+    border-radius:99px;
+
+    background:var(--accent);
+}
+
+.chat-avatar{
+    width:45px;
+    height:45px;
+
+    flex:0 0 45px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    color:white;
+
+    border-radius:14px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #1d929e,
+            #4b44b2
+        );
+
+    font-weight:900;
+}
+
+.chat-info{
+    min-width:0;
+    flex:1;
+}
+
+.chat-line{
+    display:flex;
+    gap:8px;
+}
+
+.chat-name{
+    flex:1;
+    min-width:0;
+
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+
+    font-size:13px;
+    font-weight:850;
+}
+
+.chat-time{
+    color:#596575;
+    font-size:9px;
+}
+
+.chat-preview{
+    margin-top:4px;
+
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+
+    color:var(--muted);
+
+    font-size:11px;
+}
+
+.empty{
+    padding:35px 18px;
+
+    color:var(--muted);
+
+    text-align:center;
+
+    font-size:12px;
+}
+
+.sidebar-bottom{
+    display:flex;
+    gap:7px;
+
+    padding:10px;
+
+    border-top:1px solid var(--line);
+}
+
+.bottom-button{
+    flex:1;
+
+    height:43px;
+
+    color:#a9b4c3;
+
+    background:#101720;
+
+    border:1px solid var(--line);
+
+    border-radius:12px;
+
+    font-size:11px;
+    font-weight:800;
+}
+
+/* =========================
+   CHAT
+========================= */
+
+.chat-area{
+    min-width:0;
+    min-height:0;
+
+    display:flex;
+    flex-direction:column;
+
+    background:#080c12;
+}
+
+.chat-header{
+    height:75px;
+
+    flex:0 0 75px;
+
+    display:flex;
+    align-items:center;
+    gap:11px;
+
+    padding:0 20px;
+
+    background:rgba(9,13,19,.9);
+
+    border-bottom:1px solid var(--line);
+
+    backdrop-filter:blur(18px);
+}
+
+.header-avatar{
+    width:43px;
+    height:43px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    color:white;
+
+    border-radius:14px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #1d929e,
+            #4b44b2
+        );
+
+    font-weight:900;
+}
+
+.header-info{
+    min-width:0;
+    flex:1;
+}
+
+.header-name{
+    font-size:14px;
+    font-weight:900;
+}
+
+.header-status{
+    display:flex;
+    align-items:center;
+    gap:5px;
+
+    margin-top:3px;
+
+    color:var(--muted);
+
+    font-size:10px;
+}
+
+.dot{
+    width:6px;
+    height:6px;
+
+    border-radius:50%;
+
+    background:var(--success);
+}
+
+.header-actions{
+    display:flex;
+    gap:7px;
+}
+
+.messages{
+    flex:1;
+    min-height:0;
+
+    overflow-y:auto;
+
+    padding:25px 5%;
+}
+
+.message-row{
+    display:flex;
+
+    margin-bottom:8px;
+}
+
+.message-row.mine{
+    justify-content:flex-end;
+}
+
+.message{
+    position:relative;
+
+    max-width:min(72%,650px);
+
+    padding:10px 12px 8px;
+
+    color:white;
+
+    background:#111821;
+
+    border:1px solid var(--line);
+
+    border-radius:17px 17px 17px 5px;
+}
+
+.message-row.mine .message{
+    background:
+        linear-gradient(
+            135deg,
+            #168f9d,
+            #285c7d
+        );
+
+    border-radius:17px 17px 5px 17px;
+}
+
+.message-text{
+    white-space:pre-wrap;
+    word-break:break-word;
+
+    font-size:13px;
+    line-height:1.48;
+}
+
+.message-meta{
+    display:flex;
+    justify-content:flex-end;
+    gap:5px;
+
+    margin-top:4px;
+
+    color:rgba(255,255,255,.52);
+
+    font-size:9px;
+}
+
+.day{
+    display:flex;
+    justify-content:center;
+
+    margin:8px 0 20px;
+}
+
+.day span{
+    padding:5px 10px;
+
+    color:#687385;
+
+    background:#0f151e;
+
+    border:1px solid var(--line);
+
+    border-radius:20px;
+
+    font-size:9px;
+}
+
+.edited{
+    font-style:italic;
+}
+
+/* =========================
+   COMPOSER
+========================= */
+
+.composer{
+    flex:0 0 auto;
+
+    display:flex;
+    align-items:flex-end;
+    gap:8px;
+
+    padding:
+        10px
+        20px
+        max(10px,env(safe-area-inset-bottom));
+
+    background:rgba(8,12,18,.96);
+
+    border-top:1px solid var(--line);
+
+    backdrop-filter:blur(20px);
+}
+
+.attach{
+    width:44px;
+    height:44px;
+
+    flex:0 0 44px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    color:#9ba7b7;
+
+    background:#111821;
+
+    border:1px solid var(--line);
+
+    border-radius:14px;
+
+    font-size:20px;
+}
+
+.message-input{
+    flex:1;
+
+    min-height:44px;
+    max-height:130px;
+
+    resize:none;
+
+    padding:12px 13px;
+
+    color:white;
+
+    background:#0d131b;
+
+    border:1px solid var(--line2);
+
+    border-radius:15px;
+
+    outline:none;
+
+    line-height:1.35;
+}
+
+.message-input:focus{
+    border-color:rgba(36,200,214,.45);
+}
+
+.send{
+    width:48px;
+    height:44px;
+
+    flex:0 0 48px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    color:#001315;
+
+    background:
+        linear-gradient(
+            135deg,
+            #37dce6,
+            #169fab
+        );
+
+    border:0;
+    border-radius:14px;
+
+    font-size:19px;
+    font-weight:950;
+}
+
+/* =========================
+   RIGHT
+========================= */
+
+.right{
+    padding:18px;
+
+    overflow:auto;
+
+    background:rgba(9,13,19,.94);
+
+    border-left:1px solid var(--line);
+}
+
+.profile{
+    padding:22px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(18,26,36,.82),
+            rgba(10,14,20,.82)
+        );
+
+    border:1px solid var(--line);
+
+    border-radius:22px;
+}
+
+.profile-avatar{
+    width:82px;
+    height:82px;
+
+    margin:0 auto 13px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    color:white;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--accent),
+            var(--accent2)
+        );
+
+    border-radius:25px;
+
+    font-size:26px;
+    font-weight:950;
+}
+
+.profile h2{
+    text-align:center;
+
+    font-size:18px;
+}
+
+.profile-username{
+    margin-top:4px;
+
+    color:var(--muted);
+
+    text-align:center;
+
+    font-size:11px;
+}
+
+.code-box{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+
+    margin-top:18px;
+    padding:11px;
+
+    background:#080c12;
+
+    border:1px solid var(--line);
+
+    border-radius:13px;
+}
+
+.code-label{
+    color:#657184;
+    font-size:9px;
+}
+
+.code{
+    margin-top:4px;
+
+    color:var(--accent);
+
+    font-size:11px;
+    font-weight:950;
+}
+
+.copy{
+    width:34px;
+    height:34px;
+
+    color:white;
+
+    background:#151e28;
+
+    border:1px solid var(--line);
+
+    border-radius:10px;
+}
+
+.profile-title{
+    margin:18px 0 8px;
+
+    color:#687487;
+
+    font-size:9px;
+    font-weight:950;
+
+    letter-spacing:1.2px;
+}
+
+.profile-button{
+    width:100%;
+
+    padding:12px;
+
+    color:white;
+
+    background:#0e151e;
+
+    border:1px solid var(--line);
+
+    border-radius:13px;
+
+    text-align:left;
+
+    font-size:11px;
+    font-weight:800;
+}
+
+.profile-button + .profile-button{
+    margin-top:7px;
+}
+
+/* =========================
+   MODAL
+========================= */
+
+.modal{
+    position:fixed;
+    inset:0;
+
+    z-index:100;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    padding:20px;
+
+    background:rgba(0,0,0,.65);
+
+    backdrop-filter:blur(8px);
+}
+
+.modal-card{
+    width:min(480px,100%);
+
+    max-height:90vh;
+
+    overflow:auto;
+
+    padding:22px;
+
+    background:#0d131b;
+
+    border:1px solid var(--line2);
+
+    border-radius:24px;
+
+    box-shadow:
+        0 35px 100px rgba(0,0,0,.5);
+}
+
+.modal-head{
+    display:flex;
+    align-items:center;
+
+    margin-bottom:17px;
+}
+
+.modal-head h2{
+    flex:1;
+
+    font-size:17px;
+}
+
+.close{
+    width:37px;
+    height:37px;
+
+    color:#aab4c1;
+
+    background:#151d27;
+
+    border:1px solid var(--line);
+
+    border-radius:11px;
+}
+
+.person{
+    display:flex;
+    align-items:center;
+    gap:10px;
+
+    padding:10px;
+
+    border-radius:14px;
+}
+
+.person:hover{
+    background:rgba(255,255,255,.04);
+}
+
+.person-info{
+    flex:1;
+}
+
+.person-name{
+    font-size:12px;
+    font-weight:900;
+}
+
+.person-code{
+    margin-top:3px;
+
+    color:var(--accent);
+
+    font-size:9px;
+}
+
+.person-button{
+    width:38px;
+    height:38px;
+
+    color:white;
+
+    background:#151e28;
+
+    border:1px solid var(--line);
+
+    border-radius:11px;
+}
+
+#toast{
+    position:fixed;
+
+    left:50%;
+    bottom:25px;
+
+    z-index:9999;
+
+    padding:11px 15px;
+
+    color:white;
+
+    background:#151d27;
+
+    border:1px solid var(--line2);
+
+    border-radius:13px;
+
+    box-shadow:0 20px 60px rgba(0,0,0,.5);
+
+    transform:translate(-50%,20px);
+
+    opacity:0;
+
+    pointer-events:none;
+
+    transition:.2s;
+
+    font-size:11px;
+    font-weight:800;
+}
+
+#toast.show{
+    opacity:1;
+    transform:translate(-50%,0);
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+.mobile-back{
+    display:none;
+}
+
+@media(max-width:1050px){
+
+    .app{
+        grid-template-columns:
+            320px
+            minmax(0,1fr);
+    }
+
+    .right{
+        display:none;
+    }
+}
+
+@media(max-width:720px){
+
+    .app{
+        display:block;
+    }
+
+    .sidebar{
+        position:absolute;
+        inset:0;
+
+        z-index:10;
+    }
+
+    .chat-area{
+        position:absolute;
+        inset:0;
+
+        z-index:20;
+
+        transform:translateX(100%);
+
+        transition:.25s;
+    }
+
+    .app.chat-open .chat-area{
+        transform:translateX(0);
+    }
+
+    .mobile-back{
+        display:flex;
+    }
+
+    .chat-header{
+        height:68px;
+        flex-basis:68px;
+
+        padding:0 10px;
+    }
+
+    .messages{
+        padding:18px 11px;
+    }
+
+    .message{
+        max-width:85%;
+    }
+
+    .composer{
+        padding:
+            8px
+            9px
+            max(8px,env(safe-area-inset-bottom));
+    }
+
+    .attach{
+        width:41px;
+        height:41px;
+        flex-basis:41px;
+    }
+
+    .send{
+        width:45px;
+        height:44px;
+        flex-basis:45px;
+    }
+
+    .auth-card{
+        padding:25px 20px;
+    }
+}
+
+@media(max-width:390px){
+
+    .attach{
+        display:none;
+    }
+
+    .message{
+        max-width:90%;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<!-- =========================
+     AUTH SCREEN
+========================= -->
+
+<div id="authScreen">
+
+    <div class="auth-card">
+
+        <div class="brand">
+
+            <div class="brand-icon">
+                M
+            </div>
+
+            <div class="brand-name">
+                Mesaj<span>X</span>
+            </div>
+
+        </div>
+
+        <div class="subtitle">
+            Özel sohbetlerini tek yerde yönet.
+            Her hesabın kendine ait benzersiz bir
+            TRK kodu bulunur.
+        </div>
+
+        <div class="tabs">
+
+            <button
+                id="loginTab"
+                class="tab active"
+                onclick="switchAuth('login')">
+
+                Giriş Yap
+
+            </button>
+
+            <button
+                id="registerTab"
+                class="tab"
+                onclick="switchAuth('register')">
+
+                Hesap Oluştur
+
+            </button>
+
+        </div>
+
+        <!-- LOGIN -->
+
+        <div
+            id="loginForm"
+            class="form">
+
+            <div class="field">
+
+                <span class="field-icon">◎</span>
+
+                <input
+                    id="loginIdentifier"
+                    placeholder="Kullanıcı adı veya TRK kodu"
+                    autocomplete="username">
+
+            </div>
+
+            <div class="field">
+
+                <span class="field-icon">●</span>
+
+                <input
+                    id="loginPin"
+                    type="password"
+                    inputmode="numeric"
+                    maxlength="8"
+                    placeholder="PIN"
+                    autocomplete="current-password">
+
+            </div>
+
+            <button
+                id="loginButton"
+                class="primary"
+                type="button"
+                onclick="login()">
+
+                Giriş Yap
+
+            </button>
+
+        </div>
+
+        <!-- REGISTER -->
+
+        <div
+            id="registerForm"
+            class="form hidden">
+
+            <div class="field">
+
+                <span class="field-icon">●</span>
+
+                <input
+                    id="registerName"
+                    placeholder="Adın"
+                    maxlength="50"
+                    autocomplete="name">
+
+            </div>
+
+            <div class="field">
+
+                <span class="field-icon">@</span>
+
+                <input
+                    id="registerUsername"
+                    placeholder="Kullanıcı adı"
+                    maxlength="24"
+                    autocomplete="username">
+
+            </div>
+
+            <div class="field">
+
+                <span class="field-icon">●</span>
+
+                <input
+                    id="registerPin"
+                    type="password"
+                    inputmode="numeric"
+                    maxlength="8"
+                    placeholder="4-8 haneli PIN"
+                    autocomplete="new-password">
+
+            </div>
+
+            <button
+                id="registerButton"
+                class="primary"
+                type="button"
+                onclick="registerUser()">
+
+                Hesap Oluştur
+
+            </button>
+
+        </div>
+
+        <div
+            id="authError"
+            class="auth-error">
+        </div>
+
+        <div
+            id="authSuccess"
+            class="auth-success hidden">
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =========================
+     APP
+========================= -->
+
+<div id="app">
+
+    <div
+        id="appShell"
+        class="app">
+
+        <!-- SIDEBAR -->
+
+        <aside class="sidebar">
+
+            <div class="sidebar-top">
+
+                <div class="me">
+
+                    <div
+                        id="myAvatar"
+                        class="avatar">
+                        ?
+                    </div>
+
+                    <div class="me-info">
+
+                        <div
+                            id="myName"
+                            class="me-name">
+                            Kullanıcı
+                        </div>
+
+                        <div
+                            id="myCode"
+                            class="me-code">
+                            TRK-------
+                        </div>
+
+                    </div>
+
+                    <button
+                        class="small-button"
+                        onclick="openProfile()"
+                        title="Profil">
+
+                        ⚙
+
+                    </button>
+
+                </div>
+
+                <div class="search">
+
+                    <span class="search-icon">
+                        ⌕
+                    </span>
+
+                    <input
+                        id="chatSearch"
+                        placeholder="Sohbetlerde ara..."
+                        oninput="renderChats()">
+
+                </div>
+
+            </div>
+
+            <div class="section">
+                SOHBETLER
+            </div>
+
+            <div
+                id="chatList"
+                class="chat-list">
+
+                <div class="empty">
+                    Henüz sohbet yok.
+                </div>
+
+            </div>
+
+            <div class="sidebar-bottom">
+
+                <button
+                    class="bottom-button"
+                    onclick="openNewChat()">
+
+                    + Yeni sohbet
+
+                </button>
+
+                <button
+                    class="bottom-button"
+                    onclick="logout()">
+
+                    Çıkış
+
+                </button>
+
+            </div>
+
+        </aside>
+
+        <!-- CHAT -->
+
+        <main class="chat-area">
+
+            <header class="chat-header">
+
+                <button
+                    class="small-button mobile-back"
+                    onclick="closeMobileChat()">
+
+                    ‹
+
+                </button>
+
+                <div
+                    id="headerAvatar"
+                    class="header-avatar">
+                    ?
+                </div>
+
+                <div class="header-info">
+
+                    <div
+                        id="headerName"
+                        class="header-name">
+                        Bir sohbet seç
+                    </div>
+
+                    <div
+                        id="headerStatus"
+                        class="header-status">
+
+                        <span class="dot"></span>
+                        Mesajlaşmaya hazır
+
+                    </div>
+
+                </div>
+
+                <div class="header-actions">
+
+                    <button
+                        class="small-button"
+                        onclick="showCurrentProfile()">
+
+                        👤
+
+                    </button>
+
+                </div>
+
+            </header>
+
+            <div
+                id="messages"
+                class="messages">
+
+                <div class="empty">
+                    Sol taraftan bir sohbet seç.
+                </div>
+
+            </div>
+
+            <div class="composer">
+
+                <button
+                    class="attach"
+                    onclick="showToast('Ek dosya sistemi yakında')">
+
+                    +
+
+                </button>
+
+                <textarea
+                    id="messageInput"
+                    class="message-input"
+                    rows="1"
+                    placeholder="Mesaj yaz..."
+                    oninput="resizeInput();handleTyping()"
+                    onkeydown="handleKey(event)"></textarea>
+
+                <button
+                    class="send"
+                    type="button"
+                    onclick="sendMessage()">
+
+                    ➤
+
+                </button>
+
+            </div>
+
+        </main>
+
+        <!-- RIGHT -->
+
+        <aside class="right">
+
+            <div class="profile">
+
+                <div
+                    id="sideAvatar"
+                    class="profile-avatar">
+                    ?
+                </div>
+
+                <h2 id="sideName">
+                    Kullanıcı
+                </h2>
+
+                <div
+                    id="sideUsername"
+                    class="profile-username">
+                    @username
+                </div>
+
+                <div class="code-box">
+
+                    <div>
+
+                        <div class="code-label">
+                            KİŞİSEL TRK KODUN
+                        </div>
+
+                        <div
+                            id="sideCode"
+                            class="code">
+                            TRK-------
+                        </div>
+
+                    </div>
+
+                    <button
+                        class="copy"
+                        onclick="copyMyCode()">
+
+                        ⧉
+
+                    </button>
+
+                </div>
+
+                <div class="profile-title">
+                    HIZLI İŞLEMLER
+                </div>
+
+                <button
+                    class="profile-button"
+                    onclick="openNewChat()">
+
+                    + TRK koduyla kişi bul
+
+                </button>
+
+                <button
+                    class="profile-button"
+                    onclick="openProfile()">
+
+                    Profilimi düzenle
+
+                </button>
+
+                <button
+                    class="profile-button"
+                    onclick="logout()">
+
+                    Hesaptan çık
+
+                </button>
+
+            </div>
+
+        </aside>
+
+    </div>
+
+</div>
+
+<!-- NEW CHAT -->
+
+<div
+    id="newChatModal"
+    class="modal hidden">
+
+    <div class="modal-card">
+
+        <div class="modal-head">
+
+            <h2>
+                Yeni sohbet
+            </h2>
+
+            <button
+                class="close"
+                onclick="closeNewChat()">
+
+                ×
+
+            </button>
+
+        </div>
+
+        <div class="field">
+
+            <span class="field-icon">⌕</span>
+
+            <input
+                id="peopleSearch"
+                placeholder="TRK kodu, kullanıcı adı veya isim..."
+                oninput="searchPeople()">
+
+        </div>
+
+        <div
+            id="people"
+            style="margin-top:12px">
+
+            <div class="empty">
+                Bir kişi ara.
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- PROFILE -->
+
+<div
+    id="profileModal"
+    class="modal hidden">
+
+    <div class="modal-card">
+
+        <div class="modal-head">
+
+            <h2>
+                Profil düzenle
+            </h2>
+
+            <button
+                class="close"
+                onclick="closeProfile()">
+
+                ×
+
+            </button>
+
+        </div>
+
+        <div class="form">
+
+            <div class="field">
+
+                <span class="field-icon">●</span>
+
+                <input
+                    id="editName"
+                    placeholder="Ad">
+
+            </div>
+
+            <div class="field">
+
+                <span class="field-icon">≡</span>
+
+                <input
+                    id="editBio"
+                    placeholder="Hakkında">
+
+            </div>
+
+            <button
+                class="primary"
+                onclick="saveProfile()">
+
+                Kaydet
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+"use strict";
+
+/* ==========================================
+   GLOBAL STATE
+========================================== */
+
+let token =
+    localStorage.getItem("mesajx_token");
+
+let me = null;
+let socket = null;
+
+let chats = [];
+let currentChat = null;
+let currentMessages = [];
+
+let typingTimer = null;
+let peopleTimer = null;
+
+/* ==========================================
+   START
+========================================== */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+
+        if(token){
+
+            boot();
+
+        }
+
+    }
+);
+
+/* ==========================================
+   AUTH TAB
+========================================== */
+
+function switchAuth(type){
+
+    const login =
+        document.getElementById(
+            "loginForm"
+        );
+
+    const register =
+        document.getElementById(
+            "registerForm"
+        );
+
+    const loginTab =
+        document.getElementById(
+            "loginTab"
+        );
+
+    const registerTab =
+        document.getElementById(
+            "registerTab"
+        );
+
+    const error =
+        document.getElementById(
+            "authError"
+        );
+
+    const success =
+        document.getElementById(
+            "authSuccess"
+        );
+
+    error.textContent = "";
+
+    success.classList.add(
+        "hidden"
+    );
+
+    if(type === "login"){
+
+        login.classList.remove(
+            "hidden"
+        );
+
+        register.classList.add(
+            "hidden"
+        );
+
+        loginTab.classList.add(
+            "active"
+        );
+
+        registerTab.classList.remove(
+            "active"
+        );
+
+    }else{
+
+        login.classList.add(
+            "hidden"
+        );
+
+        register.classList.remove(
+            "hidden"
+        );
+
+        loginTab.classList.remove(
+            "active"
+        );
+
+        registerTab.classList.add(
+            "active"
+        );
+
+    }
+}
+
+/* ==========================================
+   REGISTER
+========================================== */
+
+async function registerUser(){
+
+    const name =
+        document
+            .getElementById(
+                "registerName"
+            )
+            .value
+            .trim();
+
+    const username =
+        document
+            .getElementById(
+                "registerUsername"
+            )
+            .value
+            .trim();
+
+    const pin =
+        document
+            .getElementById(
+                "registerPin"
+            )
+            .value
+            .trim();
+
+    setAuthError("");
+
+    if(!name){
+
+        setAuthError(
+            "Adını yaz."
+        );
+
+        return;
+    }
+
+    if(!username){
+
+        setAuthError(
+            "Kullanıcı adı yaz."
+        );
+
+        return;
+    }
+
+    if(!/^[a-zA-Z0-9_.-]+$/.test(username)){
+
+        setAuthError(
+            "Kullanıcı adında sadece harf, rakam, _, . ve - kullan."
+        );
+
+        return;
+    }
+
+    if(!/^\d{4,8}$/.test(pin)){
+
+        setAuthError(
+            "PIN 4-8 rakam arasında olmalı."
+        );
+
+        return;
+    }
+
+    const button =
+        document.getElementById(
+            "registerButton"
+        );
+
+    button.disabled = true;
+    button.textContent =
+        "Hesap oluşturuluyor...";
+
+    try{
+
+        const response =
+            await fetch(
+                "/api/register",
+                {
+                    method:"POST",
+
+                    headers:{
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:JSON.stringify({
+                        name,
+                        username,
+                        pin
+                    })
+                }
+            );
+
+        let data = null;
+
+        try{
+
+            data =
+                await response.json();
+
+        }catch{
+
+            throw new Error(
+                "Sunucudan geçersiz cevap geldi."
+            );
+
+        }
+
+        if(
+            !response.ok ||
+            !data ||
+            data.success !== true
+        ){
+
+            throw new Error(
+                data?.error ||
+                data?.message ||
+                `Kayıt başarısız (${response.status}).`
+            );
+
+        }
+
+        /*
+          Server'daki endpoint:
+          POST /api/register
+
+          Beklenen cevap:
+          {
+             success:true,
+             token,
+             sessionToken,
+             user,
+             code
+          }
+        */
+
+        token =
+            data.token ||
+            data.sessionToken;
+
+        if(!token){
+
+            throw new Error(
+                "Hesap oluşturuldu fakat oturum anahtarı alınamadı."
+            );
+
+        }
+
+        localStorage.setItem(
+            "mesajx_token",
+            token
+        );
+
+        me =
+            data.user;
+
+        const code =
+            data.code ||
+            me?.code ||
+            "TRK kodun oluşturuldu";
+
+        document.getElementById(
+            "authSuccess"
+        ).innerHTML = `
+            <strong>Hesabın oluşturuldu.</strong><br>
+            Kişisel TRK kodun:
+            <strong>${escapeHTML(code)}</strong>
+        `;
+
+        document
+            .getElementById(
+                "authSuccess"
+            )
+            .classList.remove(
+                "hidden"
+            );
+
+        showToast(
+            "Hesap başarıyla oluşturuldu."
+        );
+
+        /*
+          Birkaç saniye beklemeden
+          direkt uygulamaya geç.
+        */
+
+        showApp();
+
+    }catch(error){
+
+        console.error(
+            "REGISTER ERROR:",
+            error
+        );
+
+        setAuthError(
+            error.message ||
+            "Hesap oluşturulamadı."
+        );
+
+    }finally{
+
+        button.disabled = false;
+
+        button.textContent =
+            "Hesap Oluştur";
+
+    }
+}
+
+/* ==========================================
+   LOGIN
+========================================== */
+
+async function login(){
+
+    const identifier =
+        document
+            .getElementById(
+                "loginIdentifier"
+            )
+            .value
+            .trim();
+
+    const pin =
+        document
+            .getElementById(
+                "loginPin"
+            )
+            .value
+            .trim();
+
+    setAuthError("");
+
+    if(!identifier){
+
+        setAuthError(
+            "Kullanıcı adı veya TRK kodu yaz."
+        );
+
+        return;
+    }
+
+    if(!pin){
+
+        setAuthError(
+            "PIN yaz."
+        );
+
+        return;
+    }
+
+    const button =
+        document.getElementById(
+            "loginButton"
+        );
+
+    button.disabled = true;
+    button.textContent =
+        "Giriş yapılıyor...";
+
+    try{
+
+        const response =
+            await fetch(
+                "/api/login",
+                {
+                    method:"POST",
+
+                    headers:{
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:JSON.stringify({
+                        identifier,
+                        pin
+                    })
+                }
+            );
+
+        const data =
+            await response.json();
+
+        if(
+            !response.ok ||
+            data.success !== true
+        ){
+
+            throw new Error(
+                data.error ||
+                "Giriş yapılamadı."
+            );
+
+        }
+
+        token =
+            data.token ||
+            data.sessionToken;
+
+        localStorage.setItem(
+            "mesajx_token",
+            token
+        );
+
+        me =
+            data.user;
+
+        showApp();
+
+    }catch(error){
+
+        setAuthError(
+            error.message
+        );
+
+    }finally{
+
+        button.disabled = false;
+
+        button.textContent =
+            "Giriş Yap";
+
+    }
+}
+
+/* ==========================================
+   BOOT
+========================================== */
+
+async function boot(){
+
+    try{
+
+        const response =
+            await fetch(
+                "/api/me",
+                {
+                    headers:{
+                        Authorization:
+                            `Bearer ${token}`
+                    }
+                }
+            );
+
+        const data =
+            await response.json();
+
+        if(
+            !response.ok ||
+            data.success !== true
+        ){
+
+            throw new Error();
+
+        }
+
+        me =
+            data.user;
+
+        showApp();
+
+    }catch{
+
+        localStorage.removeItem(
+            "mesajx_token"
+        );
+
+        token = null;
+
+    }
+}
+
+/* ==========================================
+   SHOW APP
+========================================== */
+
+function showApp(){
+
+    document.getElementById(
+        "authScreen"
+    ).style.display = "none";
+
+    document.getElementById(
+        "app"
+    ).style.display = "block";
+
+    updateMyUI();
+
+    connectSocket();
+
+}
+
+/* ==========================================
+   SOCKET
+========================================== */
+
+function connectSocket(){
+
+    if(socket){
+
+        socket.disconnect();
+
+    }
+
+    socket = io();
+
+    socket.on(
+        "connect",
+        () => {
+
+            socket.emit(
+                "authenticate",
+                {token},
+                result => {
+
+                    if(
+                        !result ||
+                        result.success !== true
+                    ){
+
+                        showToast(
+                            "Oturum doğrulanamadı."
+                        );
+
+                        logout();
+
+                        return;
+                    }
+
+                    me =
+                        result.user;
+
+                    updateMyUI();
+
+                    loadChats();
+
+                }
+            );
+
+        }
+    );
+
+    socket.on(
+        "new_message",
+        message => {
+
+            if(
+                currentChat &&
+                message.chatId ===
+                currentChat.id
+            ){
+
+                if(
+                    !currentMessages.some(
+                        m =>
+                            m.id === message.id
+                    )
+                ){
+
+                    currentMessages.push(
+                        message
+                    );
+
+                }
+
+                renderMessages();
+
+            }
+
+            const chat =
+                chats.find(
+                    c =>
+                        c.id ===
+                        message.chatId
+                );
+
+            if(chat){
+
+                chat.lastMessage =
+                    message;
+
+                renderChats();
+
+            }
+
+        }
+    );
+
+    socket.on(
+        "message_edited",
+        message => {
+
+            replaceMessage(
+                message
+            );
+
+        }
+    );
+
+    socket.on(
+        "message_deleted",
+        message => {
+
+            replaceMessage(
+                message
+            );
+
+        }
+    );
+
+    socket.on(
+        "message_reaction",
+        message => {
+
+            replaceMessage(
+                message
+            );
+
+        }
+    );
+
+    socket.on(
+        "typing",
+        data => {
+
+            if(
+                currentChat &&
+                data.chatId ===
+                currentChat.id
+            ){
+
+                const status =
+                    document.getElementById(
+                        "headerStatus"
+                    );
+
+                if(data.typing){
+
+                    status.innerHTML =
+                        "● " +
+                        escapeHTML(
+                            data.name ||
+                            "Kişi"
+                        ) +
+                        " yazıyor...";
+
+                }else{
+
+                    status.innerHTML =
+                        "● Mesajlaşmaya hazır";
+
+                }
+
+            }
+
+        }
+    );
+
+    socket.on(
+        "chat_created",
+        () => {
+
+            loadChats();
+
+        }
+    );
+
+}
+
+/* ==========================================
+   CHATS
+========================================== */
+
+function loadChats(){
+
+    socket.emit(
+        "get_chats",
+        result => {
+
+            if(
+                !result ||
+                result.success !== true
+            ){
+
+                showToast(
+                    result?.error ||
+                    "Sohbetler alınamadı."
+                );
+
+                return;
+            }
+
+            chats =
+                Array.isArray(result.chats)
+                    ? result.chats
+                    : [];
+
+            renderChats();
+
+        }
+    );
+
+}
+
+function renderChats(){
+
+    const list =
+        document.getElementById(
+            "chatList"
+        );
+
+    const query =
+        document.getElementById(
+            "chatSearch"
+        )
+        .value
+        .trim()
+        .toLowerCase();
+
+    const filtered =
+        chats.filter(
+            chat => {
+
+                const name =
+                    chat.name ||
+                    chat.otherUser?.name ||
+                    "";
+
+                const username =
+                    chat.otherUser?.username ||
+                    "";
+
+                const code =
+                    chat.otherUser?.code ||
+                    "";
+
+                return (
+                    !query ||
+                    name.toLowerCase()
+                        .includes(query) ||
+                    username.toLowerCase()
+                        .includes(query) ||
+                    code.toLowerCase()
+                        .includes(query)
+                );
+
+            }
+        );
+
+    if(!filtered.length){
+
+        list.innerHTML = `
+            <div class="empty">
+                Henüz sohbet yok.
+            </div>
+        `;
+
+        return;
+    }
+
+    list.innerHTML =
+        filtered
+            .map(
+                chat => {
+
+                    const name =
+                        chat.name ||
+                        chat.otherUser?.name ||
+                        "Sohbet";
+
+                    const preview =
+                        chat.lastMessage?.text ||
+                        "Henüz mesaj yok";
+
+                    return `
+                        <div
+                            class="chat ${
+                                currentChat?.id === chat.id
+                                    ? "active"
+                                    : ""
+                            }"
+                            onclick="openChat('${chat.id}')">
+
+                            <div class="chat-avatar">
+                                ${escapeHTML(
+                                    initial(name)
+                                )}
+                            </div>
+
+                            <div class="chat-info">
+
+                                <div class="chat-line">
+
+                                    <div class="chat-name">
+                                        ${escapeHTML(name)}
+                                    </div>
+
+                                    <div class="chat-time">
+                                        ${formatTime(
+                                            chat.lastMessage?.createdAt
+                                        )}
+                                    </div>
+
+                                </div>
+
+                                <div class="chat-preview">
+                                    ${escapeHTML(
+                                        preview
+                                    )}
+                                </div>
+
+                            </div>
+
+                        </div>
+                    `;
+
+                }
+            )
+            .join("");
+
+}
+
+/* ==========================================
+   OPEN CHAT
+========================================== */
+
+function openChat(id){
+
+    const chat =
+        chats.find(
+            c => c.id === id
+        );
+
+    if(!chat) return;
+
+    currentChat = chat;
+
+    document
+        .getElementById(
+            "appShell"
+        )
+        .classList.add(
+            "chat-open"
+        );
+
+    updateHeader();
+
+    renderChats();
+
+    socket.emit(
+        "get_messages",
+        {chatId:id},
+        result => {
+
+            if(
+                !result ||
+                result.success !== true
+            ){
+
+                showToast(
+                    result?.error ||
+                    "Mesajlar alınamadı."
+                );
+
+                return;
+            }
+
+            currentMessages =
+                result.messages || [];
+
+            renderMessages();
+
+        }
+    );
+
+}
+
+/* ==========================================
+   MESSAGES
+========================================== */
+
+function renderMessages(){
+
+    const area =
+        document.getElementById(
+            "messages"
+        );
+
+    if(!currentChat){
+
+        area.innerHTML = `
+            <div class="empty">
+                Bir sohbet seç.
+            </div>
+        `;
+
+        return;
+    }
+
+    if(!currentMessages.length){
+
+        area.innerHTML = `
+            <div class="empty">
+                Bu sohbette henüz mesaj yok.<br>
+                İlk mesajı sen gönder.
+            </div>
+        `;
+
+        return;
+    }
+
+    let lastDate = "";
+
+    area.innerHTML =
+        currentMessages
+            .map(
+                message => {
+
+                    const date =
+                        new Date(
+                            message.createdAt
+                        );
+
+                    const dateText =
+                        date.toLocaleDateString(
+                            "tr-TR"
+                        );
+
+                    let separator = "";
+
+                    if(
+                        dateText !==
+                        lastDate
+                    ){
+
+                        separator = `
+                            <div class="day">
+                                <span>
+                                    ${escapeHTML(
+                                        dateText
+                                    )}
+                                </span>
+                            </div>
+                        `;
+
+                        lastDate =
+                            dateText;
+
+                    }
+
+                    const mine =
+                        message.senderId ===
+                        me.id;
+
+                    const deleted =
+                        message.deleted;
+
+                    return `
+                        ${separator}
+
+                        <div
+                            class="message-row ${
+                                mine
+                                    ? "mine"
+                                    : ""
+                            }">
+
+                            <div class="message">
+
+                                <div class="message-text ${
+                                    deleted
+                                        ? "edited"
+                                        : ""
+                                }">
+
+                                    ${escapeHTML(
+                                        deleted
+                                            ? "Bu mesaj silindi."
+                                            : message.text
+                                    )}
+
+                                </div>
+
+                                <div class="message-meta">
+
+                                    ${
+                                        message.edited
+                                            ? "düzenlendi "
+                                            : ""
+                                    }
+
+                                    ${formatTime(
+                                        message.createdAt
+                                    )}
+
+                                    ${
+                                        mine
+                                            ? " ✓"
+                                            : ""
+                                    }
+
+                                </div>
+
+                            </div>
+
+                        </div>
+                    `;
+
+                }
+            )
+            .join("");
+
+    requestAnimationFrame(
+        () => {
+
+            area.scrollTop =
+                area.scrollHeight;
+
+        }
+    );
+
+}
+
+/* ==========================================
+   SEND MESSAGE
+========================================== */
+
+function sendMessage(){
+
+    if(
+        !socket ||
+        !currentChat
+    ){
+
+        showToast(
+            "Önce bir sohbet seç."
+        );
+
+        return;
+    }
+
+    const input =
+        document.getElementById(
+            "messageInput"
+        );
+
+    const text =
+        input.value.trim();
+
+    if(!text) return;
+
+    socket.emit(
+        "send_message",
+        {
+            chatId:
+                currentChat.id,
+
+            text
+        },
+        result => {
+
+            if(
+                !result ||
+                result.success !== true
+            ){
+
+                showToast(
+                    result?.error ||
+                    "Mesaj gönderilemedi."
+                );
+
+                return;
+            }
+
+            input.value = "";
+
+            resizeInput();
+
+        }
+    );
+
+}
+
+/* ==========================================
+   KEYBOARD
+========================================== */
+
+function handleKey(event){
+
+    if(
+        event.key === "Enter" &&
+        !event.shiftKey
+    ){
+
+        event.preventDefault();
+
+        sendMessage();
+
+    }
+
+}
+
+/* ==========================================
+   TYPING
+========================================== */
+
+function handleTyping(){
+
+    if(
+        !socket ||
+        !currentChat
+    ) return;
+
+    socket.emit(
+        "typing",
+        {
+            chatId:
+                currentChat.id,
+
+            typing:true
+        }
+    );
+
+    clearTimeout(
+        typingTimer
+    );
+
+    typingTimer =
+        setTimeout(
+            () => {
+
+                socket.emit(
+                    "typing",
+                    {
+                        chatId:
+                            currentChat.id,
+
+                        typing:false
+                    }
+                );
+
+            },
+            800
+        );
+
+}
+
+/* ==========================================
+   INPUT SIZE
+========================================== */
+
+function resizeInput(){
+
+    const input =
+        document.getElementById(
+            "messageInput"
+        );
+
+    input.style.height =
+        "44px";
+
+    input.style.height =
+        Math.min(
+            input.scrollHeight,
+            130
+        ) + "px";
+
+}
+
+/* ==========================================
+   PEOPLE SEARCH
+========================================== */
+
+function openNewChat(){
+
+    document
+        .getElementById(
+            "newChatModal"
+        )
+        .classList.remove(
+            "hidden"
+        );
+
+    document
+        .getElementById(
+            "peopleSearch"
+        )
+        .focus();
+
+}
+
+function closeNewChat(){
+
+    document
+        .getElementById(
+            "newChatModal"
+        )
+        .classList.add(
+            "hidden"
+        );
+
+}
+
+function searchPeople(){
+
+    clearTimeout(
+        peopleTimer
+    );
+
+    const q =
+        document
+            .getElementById(
+                "peopleSearch"
+            )
+            .value
+            .trim();
+
+    const people =
+        document.getElementById(
+            "people"
+        );
+
+    if(!q){
+
+        people.innerHTML = `
+            <div class="empty">
+                TRK kodu veya kullanıcı adı yaz.
+            </div>
+        `;
+
+        return;
+    }
+
+    people.innerHTML = `
+        <div class="empty">
+            Aranıyor...
+        </div>
+    `;
+
+    peopleTimer =
+        setTimeout(
+            () => {
+
+                socket.emit(
+                    "search_users",
+                    {q},
+                    result => {
+
+                        if(
+                            !result ||
+                            result.success !== true
+                        ){
+
+                            people.innerHTML = `
+                                <div class="empty">
+                                    Arama başarısız.
+                                </div>
+                            `;
+
+                            return;
+                        }
+
+                        if(
+                            !result.users?.length
+                        ){
+
+                            people.innerHTML = `
+                                <div class="empty">
+                                    Kişi bulunamadı.
+                                </div>
+                            `;
+
+                            return;
+                        }
+
+                        people.innerHTML =
+                            result.users
+                                .map(
+                                    user => `
+                                        <div class="person">
+
+                                            <div
+                                                class="chat-avatar"
+                                                style="
+                                                    width:42px;
+                                                    height:42px;
+                                                    flex-basis:42px;
+                                                ">
+
+                                                ${escapeHTML(
+                                                    initial(
+                                                        user.name
+                                                    )
+                                                )}
+
+                                            </div>
+
+                                            <div class="person-info">
+
+                                                <div class="person-name">
+                                                    ${escapeHTML(
+                                                        user.name
+                                                    )}
+                                                </div>
+
+                                                <div class="person-code">
+                                                    ${escapeHTML(
+                                                        user.code
+                                                    )}
+                                                </div>
+
+                                            </div>
+
+                                            <button
+                                                class="person-button"
+                                                onclick="startChat('${user.id}')">
+
+                                                →
+
+                                            </button>
+
+                                        </div>
+                                    `
+                                )
+                                .join("");
+
+                    }
+                );
+
+            },
+            250
+        );
+
+}
+
+function startChat(userId){
+
+    socket.emit(
+        "create_chat",
+        {
+            type:"private",
+            userId
+        },
+        result => {
+
+            if(
+                !result ||
+                result.success !== true
+            ){
+
+                showToast(
+                    result?.error ||
+                    "Sohbet oluşturulamadı."
+                );
+
+                return;
+            }
+
+            closeNewChat();
+
+            loadChats();
+
+            setTimeout(
+                () => {
+
+                    if(result.chat?.id){
+
+                        openChat(
+                            result.chat.id
+                        );
+
+                    }
+
+                },
+                150
+            );
+
+        }
+    );
+
+}
+
+/* ==========================================
+   PROFILE
+========================================== */
+
+function updateMyUI(){
+
+    if(!me) return;
+
+    const name =
+        me.name ||
+        "Kullanıcı";
+
+    const first =
+        initial(name);
+
+    document.getElementById(
+        "myAvatar"
+    ).textContent = first;
+
+    document.getElementById(
+        "myName"
+    ).textContent = name;
+
+    document.getElementById(
+        "myCode"
+    ).textContent =
+        me.code || "";
+
+    document.getElementById(
+        "sideAvatar"
+    ).textContent = first;
+
+    document.getElementById(
+        "sideName"
+    ).textContent = name;
+
+    document.getElementById(
+        "sideUsername"
+    ).textContent =
+        "@" +
+        (me.username || "");
+
+    document.getElementById(
+        "sideCode"
+    ).textContent =
+        me.code || "";
+
+}
+
+function openProfile(){
+
+    document.getElementById(
+        "editName"
+    ).value =
+        me?.name || "";
+
+    document.getElementById(
+        "editBio"
+    ).value =
+        me?.bio || "";
+
+    document
+        .getElementById(
+            "profileModal"
+        )
+        .classList.remove(
+            "hidden"
+        );
+
+}
+
+function closeProfile(){
+
+    document
+        .getElementById(
+            "profileModal"
+        )
+        .classList.add(
+            "hidden"
+        );
+
+}
+
+async function saveProfile(){
+
+    const name =
+        document.getElementById(
+            "editName"
+        ).value.trim();
+
+    const bio =
+        document.getElementById(
+            "editBio"
+        ).value.trim();
+
+    try{
+
+        const response =
+            await fetch(
+                "/api/profile",
+                {
+                    method:"PATCH",
+
+                    headers:{
+                        "Content-Type":
+                            "application/json",
+
+                        Authorization:
+                            `Bearer ${token}`
+                    },
+
+                    body:JSON.stringify({
+                        name,
+                        bio
+                    })
+                }
+            );
+
+        const data =
+            await response.json();
+
+        if(
+            !response.ok ||
+            !data.success
+        ){
+
+            throw new Error(
+                data.error ||
+                "Profil güncellenemedi."
+            );
+
+        }
+
+        me =
+            data.user;
+
+        updateMyUI();
+
+        closeProfile();
+
+        showToast(
+            "Profil güncellendi."
+        );
+
+    }catch(error){
+
+        showToast(
+            error.message
+        );
+
+    }
+
+}
+
+/* ==========================================
+   HEADER
+========================================== */
+
+function updateHeader(){
+
+    if(!currentChat) return;
+
+    const name =
+        currentChat.name ||
+        currentChat.otherUser?.name ||
+        "Sohbet";
+
+    document.getElementById(
+        "headerAvatar"
+    ).textContent =
+        initial(name);
+
+    document.getElementById(
+        "headerName"
+    ).textContent =
+        name;
+
+    document.getElementById(
+        "headerStatus"
+    ).innerHTML =
+        '<span class="dot"></span> Mesajlaşmaya hazır';
+
+}
+
+function showCurrentProfile(){
+
+    if(
+        currentChat?.otherUser
+    ){
+
+        showToast(
+            currentChat.otherUser.name +
+            " • " +
+            currentChat.otherUser.code
+        );
+
+    }
+
+}
+
+/* ==========================================
+   COPY
+========================================== */
+
+function copyMyCode(){
+
+    if(!me?.code) return;
+
+    navigator.clipboard
+        .writeText(
+            me.code
+        )
+        .then(
+            () => {
+
+                showToast(
+                    "TRK kodun kopyalandı."
+                );
+
+            }
+        )
+        .catch(
+            () => {
+
+                showToast(
+                    me.code
+                );
+
+            }
+        );
+
+}
+
+/* ==========================================
+   LOGOUT
+========================================== */
+
+async function logout(){
+
+    try{
+
+        await fetch(
+            "/api/logout",
+            {
+                method:"POST",
+
+                headers:{
+                    Authorization:
+                        `Bearer ${token}`
+                }
+            }
+        );
+
+    }catch{}
+
+    if(socket){
+
+        socket.disconnect();
+
+        socket = null;
+
+    }
+
+    localStorage.removeItem(
+        "mesajx_token"
+    );
+
+    token = null;
+    me = null;
+    chats = [];
+    currentChat = null;
+    currentMessages = [];
+
+    document.getElementById(
+        "app"
+    ).style.display = "none";
+
+    document.getElementById(
+        "authScreen"
+    ).style.display = "flex";
+
+    switchAuth(
+        "login"
+    );
+
+}
+
+/* ==========================================
+   MOBILE
+========================================== */
+
+function closeMobileChat(){
+
+    document
+        .getElementById(
+            "appShell"
+        )
+        .classList.remove(
+            "chat-open"
+        );
+
+}
+
+/* ==========================================
+   REPLACE MESSAGE
+========================================== */
+
+function replaceMessage(message){
+
+    const index =
+        currentMessages.findIndex(
+            m =>
+                m.id === message.id
+        );
+
+    if(index !== -1){
+
+        currentMessages[index] =
+            message;
+
+        renderMessages();
+
+    }
+
+}
+
+/* ==========================================
+   AUTH ERROR
+========================================== */
+
+function setAuthError(text){
+
+    document.getElementById(
+        "authError"
+    ).textContent =
+        text || "";
+
+}
+
+/* ==========================================
+   TOAST
+========================================== */
+
+let toastTimer = null;
+
+function showToast(text){
+
+    const toast =
+        document.getElementById(
+            "toast"
+        );
+
+    toast.textContent =
+        text;
+
+    toast.classList.add(
+        "show"
+    );
+
+    clearTimeout(
+        toastTimer
+    );
+
+    toastTimer =
+        setTimeout(
+            () => {
+
+                toast.classList.remove(
+                    "show"
+                );
+
+            },
+            2300
+        );
+
+}
+
+/* ==========================================
+   HELPERS
+========================================== */
+
+function initial(name){
+
+    const value =
+        String(name || "?")
+            .trim();
+
+    return (
+        value.charAt(0)
+            .toUpperCase() ||
+        "?"
+    );
+
+}
+
+function formatTime(date){
+
+    if(!date) return "";
+
+    try{
+
+        return new Date(
+            date
+        ).toLocaleTimeString(
+            "tr-TR",
+            {
+                hour:"2-digit",
+                minute:"2-digit"
+            }
+        );
+
+    }catch{
+
+        return "";
+
+    }
+
+}
+
+function escapeHTML(value){
+
+    return String(
+        value ?? ""
+    )
+    .replaceAll(
+        "&",
+        "&amp;"
+    )
+    .replaceAll(
+        "<",
+        "&lt;"
+    )
+    .replaceAll(
+        ">",
+        "&gt;"
+    )
+    .replaceAll(
+        '"',
+        "&quot;"
+    )
+    .replaceAll(
+        "'",
+        "&#039;"
+    );
+
+}
+
+/* ==========================================
+   MODAL CLICK OUTSIDE
+========================================== */
+
+document.addEventListener(
+    "click",
+    event => {
+
+        const newChat =
+            document.getElementById(
+                "newChatModal"
+            );
+
+        const profile =
+            document.getElementById(
+                "profileModal"
+            );
+
+        if(
+            event.target ===
+            newChat
+        ){
+
+            closeNewChat();
+
+        }
+
+        if(
+            event.target ===
+            profile
+        ){
+
+            closeProfile();
+
+        }
+
+    }
+);
+</script>
+
+</body>
+</html>
