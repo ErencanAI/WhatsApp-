@@ -1,0 +1,3100 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<title>MesajX Ultra</title>
+<script src="/socket.io/socket.io.js"></script>
+
+<style>
+:root{
+ --bg:#05070b;
+ --panel:#0b1017;
+ --panel2:#101720;
+ --panel3:#151d27;
+ --line:rgba(255,255,255,.08);
+ --line2:rgba(255,255,255,.14);
+ --text:#f5f7fa;
+ --muted:#8995a6;
+ --accent:#25cbd7;
+ --accent2:#665cf2;
+ --green:#35d79a;
+ --red:#ff5368;
+ --yellow:#f4c95d;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+html,body{
+ width:100%;
+ height:100%;
+}
+
+body{
+ overflow:hidden;
+ color:var(--text);
+ font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+ background:
+ radial-gradient(circle at 80% 0%,rgba(37,203,215,.12),transparent 28%),
+ radial-gradient(circle at 0% 100%,rgba(102,92,242,.12),transparent 35%),
+ var(--bg);
+}
+
+button,input,textarea{font:inherit}
+button{cursor:pointer}
+.hidden{display:none!important}
+
+/* AUTH */
+
+#authScreen{
+ position:fixed;
+ inset:0;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ padding:20px;
+}
+
+.auth-card{
+ width:min(480px,100%);
+ padding:30px;
+ border:1px solid var(--line2);
+ border-radius:28px;
+ background:linear-gradient(145deg,rgba(18,27,37,.98),rgba(6,9,14,.99));
+ box-shadow:0 35px 100px rgba(0,0,0,.55);
+ backdrop-filter:blur(30px);
+}
+
+.brand{
+ display:flex;
+ align-items:center;
+ gap:12px;
+}
+
+.brand-icon{
+ width:54px;
+ height:54px;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ border-radius:17px;
+ background:linear-gradient(135deg,var(--accent),var(--accent2));
+ font-size:24px;
+ font-weight:950;
+}
+
+.brand-name{
+ font-size:30px;
+ font-weight:950;
+ letter-spacing:-1.2px;
+}
+
+.brand-name span{color:var(--accent)}
+
+.subtitle{
+ margin-top:10px;
+ margin-bottom:20px;
+ color:var(--muted);
+ font-size:13px;
+ line-height:1.6;
+}
+
+.tabs{
+ display:grid;
+ grid-template-columns:1fr 1fr;
+ gap:4px;
+ padding:4px;
+ margin-bottom:17px;
+ background:#070a0f;
+ border:1px solid var(--line);
+ border-radius:14px;
+}
+
+.tab{
+ height:42px;
+ border:0;
+ border-radius:10px;
+ color:var(--muted);
+ background:transparent;
+ font-weight:850;
+}
+
+.tab.active{
+ color:white;
+ background:#151d27;
+}
+
+.form{
+ display:flex;
+ flex-direction:column;
+ gap:11px;
+}
+
+.field{position:relative}
+
+.field input,
+.field textarea{
+ width:100%;
+ color:white;
+ background:#070b10;
+ border:1px solid var(--line);
+ border-radius:15px;
+ outline:none;
+}
+
+.field input{
+ height:54px;
+ padding:0 15px 0 16px;
+}
+
+.field textarea{
+ min-height:100px;
+ padding:13px;
+ resize:vertical;
+}
+
+.field input:focus,
+.field textarea:focus{
+ border-color:rgba(37,203,215,.5);
+ box-shadow:0 0 0 4px rgba(37,203,215,.06);
+}
+
+.primary{
+ width:100%;
+ height:54px;
+ margin-top:3px;
+ color:#001315;
+ border:0;
+ border-radius:15px;
+ background:linear-gradient(135deg,#38dce5,#159ba8);
+ font-weight:950;
+}
+
+.primary:disabled{
+ opacity:.55;
+ cursor:not-allowed;
+}
+
+.auth-error{
+ min-height:20px;
+ margin-top:11px;
+ text-align:center;
+ color:var(--red);
+ font-size:12px;
+}
+
+.auth-success{
+ margin-top:12px;
+ padding:12px;
+ color:#91f5d0;
+ background:rgba(53,215,154,.07);
+ border:1px solid rgba(53,215,154,.18);
+ border-radius:13px;
+ font-size:11px;
+ line-height:1.5;
+}
+
+/* APP */
+
+#app{
+ display:none;
+ position:fixed;
+ inset:0;
+}
+
+.app{
+ width:100%;
+ height:100%;
+ display:grid;
+ grid-template-columns:340px minmax(0,1fr) 310px;
+}
+
+/* SIDEBAR */
+
+.sidebar{
+ min-width:0;
+ display:flex;
+ flex-direction:column;
+ background:rgba(7,11,17,.98);
+ border-right:1px solid var(--line);
+}
+
+.sidebar-top{
+ padding:16px;
+ border-bottom:1px solid var(--line);
+}
+
+.me{
+ display:flex;
+ align-items:center;
+ gap:10px;
+}
+
+.avatar{
+ width:46px;
+ height:46px;
+ flex:0 0 46px;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ border-radius:15px;
+ color:white;
+ background:linear-gradient(135deg,var(--accent),var(--accent2));
+ font-weight:950;
+}
+
+.me-info{
+ min-width:0;
+ flex:1;
+}
+
+.me-name{
+ overflow:hidden;
+ white-space:nowrap;
+ text-overflow:ellipsis;
+ font-size:14px;
+ font-weight:900;
+}
+
+.me-code{
+ margin-top:3px;
+ color:var(--accent);
+ font-size:10px;
+ font-weight:900;
+}
+
+.icon-btn{
+ width:40px;
+ height:40px;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ color:#aab4c2;
+ background:#111821;
+ border:1px solid var(--line);
+ border-radius:12px;
+}
+
+.search{
+ position:relative;
+ margin-top:13px;
+}
+
+.search span{
+ position:absolute;
+ left:14px;
+ top:50%;
+ transform:translateY(-50%);
+ color:#657184;
+}
+
+.search input{
+ width:100%;
+ height:44px;
+ padding-left:40px;
+ color:white;
+ background:#070b10;
+ border:1px solid var(--line);
+ border-radius:14px;
+ outline:none;
+}
+
+.quick-actions{
+ display:grid;
+ grid-template-columns:repeat(4,1fr);
+ gap:6px;
+ margin-top:10px;
+}
+
+.quick{
+ height:40px;
+ color:#aab4c2;
+ background:#0e151e;
+ border:1px solid var(--line);
+ border-radius:11px;
+ font-size:16px;
+}
+
+.quick:hover{
+ color:white;
+ border-color:rgba(37,203,215,.3);
+}
+
+.section{
+ padding:14px 17px 7px;
+ color:#657184;
+ font-size:9px;
+ font-weight:950;
+ letter-spacing:1.5px;
+}
+
+.chat-list{
+ flex:1;
+ min-height:0;
+ overflow:auto;
+ padding:3px 8px 10px;
+}
+
+.chat{
+ position:relative;
+ display:flex;
+ align-items:center;
+ gap:10px;
+ padding:11px;
+ border-radius:16px;
+ cursor:pointer;
+}
+
+.chat:hover{background:rgba(255,255,255,.035)}
+
+.chat.active{
+ background:linear-gradient(90deg,rgba(37,203,215,.12),rgba(37,203,215,.02));
+}
+
+.chat.active:before{
+ content:"";
+ position:absolute;
+ left:0;
+ top:11px;
+ bottom:11px;
+ width:3px;
+ border-radius:99px;
+ background:var(--accent);
+}
+
+.chat-avatar{
+ width:45px;
+ height:45px;
+ flex:0 0 45px;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ color:white;
+ border-radius:14px;
+ background:linear-gradient(135deg,#1e929e,#4d45b4);
+ font-weight:900;
+}
+
+.chat-info{
+ min-width:0;
+ flex:1;
+}
+
+.chat-line{
+ display:flex;
+ gap:8px;
+}
+
+.chat-name{
+ flex:1;
+ min-width:0;
+ overflow:hidden;
+ white-space:nowrap;
+ text-overflow:ellipsis;
+ font-size:13px;
+ font-weight:850;
+}
+
+.chat-time{
+ color:#596575;
+ font-size:9px;
+}
+
+.chat-preview{
+ margin-top:4px;
+ overflow:hidden;
+ white-space:nowrap;
+ text-overflow:ellipsis;
+ color:var(--muted);
+ font-size:11px;
+}
+
+.unread{
+ min-width:19px;
+ height:19px;
+ padding:0 5px;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ border-radius:20px;
+ color:#001315;
+ background:var(--accent);
+ font-size:9px;
+ font-weight:950;
+}
+
+.empty{
+ padding:35px 18px;
+ color:var(--muted);
+ text-align:center;
+ font-size:12px;
+ line-height:1.6;
+}
+
+.sidebar-bottom{
+ display:grid;
+ grid-template-columns:1fr 1fr;
+ gap:7px;
+ padding:10px;
+ border-top:1px solid var(--line);
+}
+
+.bottom-btn{
+ height:43px;
+ color:#aab4c2;
+ background:#101720;
+ border:1px solid var(--line);
+ border-radius:12px;
+ font-size:11px;
+ font-weight:850;
+}
+
+/* CHAT */
+
+.chat-area{
+ min-width:0;
+ min-height:0;
+ display:flex;
+ flex-direction:column;
+ background:#080c12;
+}
+
+.chat-header{
+ height:72px;
+ flex:0 0 72px;
+ display:flex;
+ align-items:center;
+ gap:10px;
+ padding:0 17px;
+ background:rgba(9,13,19,.92);
+ border-bottom:1px solid var(--line);
+ backdrop-filter:blur(18px);
+}
+
+.header-avatar{
+ width:43px;
+ height:43px;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ color:white;
+ border-radius:14px;
+ background:linear-gradient(135deg,#1d929e,#4c44b2);
+ font-weight:900;
+}
+
+.header-info{
+ min-width:0;
+ flex:1;
+}
+
+.header-name{
+ overflow:hidden;
+ white-space:nowrap;
+ text-overflow:ellipsis;
+ font-size:14px;
+ font-weight:900;
+}
+
+.header-status{
+ margin-top:3px;
+ color:var(--muted);
+ font-size:10px;
+}
+
+.header-actions{
+ display:flex;
+ gap:6px;
+}
+
+.messages{
+ flex:1;
+ min-height:0;
+ overflow:auto;
+ padding:22px 5%;
+}
+
+.message-row{
+ display:flex;
+ margin-bottom:8px;
+}
+
+.message-row.mine{
+ justify-content:flex-end;
+}
+
+.message{
+ max-width:min(74%,650px);
+ padding:10px 12px 8px;
+ color:white;
+ background:#111821;
+ border:1px solid var(--line);
+ border-radius:17px 17px 17px 5px;
+}
+
+.message-row.mine .message{
+ background:linear-gradient(135deg,#168f9d,#285c7d);
+ border-radius:17px 17px 5px 17px;
+}
+
+.message-text{
+ white-space:pre-wrap;
+ word-break:break-word;
+ font-size:13px;
+ line-height:1.5;
+}
+
+.message-meta{
+ display:flex;
+ justify-content:flex-end;
+ gap:5px;
+ margin-top:4px;
+ color:rgba(255,255,255,.55);
+ font-size:9px;
+}
+
+.day{
+ display:flex;
+ justify-content:center;
+ margin:7px 0 18px;
+}
+
+.day span{
+ padding:5px 10px;
+ color:#687385;
+ background:#0f151e;
+ border:1px solid var(--line);
+ border-radius:20px;
+ font-size:9px;
+}
+
+/* COMPOSER */
+
+.composer{
+ flex:0 0 auto;
+ display:flex;
+ align-items:flex-end;
+ gap:7px;
+ padding:9px 15px max(9px,env(safe-area-inset-bottom));
+ background:rgba(8,12,18,.97);
+ border-top:1px solid var(--line);
+}
+
+.compose-btn{
+ width:43px;
+ height:43px;
+ flex:0 0 43px;
+ color:#aab4c2;
+ background:#111821;
+ border:1px solid var(--line);
+ border-radius:14px;
+}
+
+.message-input{
+ flex:1;
+ min-height:43px;
+ max-height:130px;
+ resize:none;
+ padding:11px 13px;
+ color:white;
+ background:#0d131b;
+ border:1px solid var(--line2);
+ border-radius:15px;
+ outline:none;
+ line-height:1.4;
+}
+
+.send{
+ width:47px;
+ height:43px;
+ flex:0 0 47px;
+ color:#001315;
+ background:linear-gradient(135deg,#37dce6,#169fab);
+ border:0;
+ border-radius:14px;
+ font-size:18px;
+ font-weight:950;
+}
+
+/* RIGHT */
+
+.right{
+ padding:16px;
+ overflow:auto;
+ background:rgba(8,12,18,.96);
+ border-left:1px solid var(--line);
+}
+
+.panel{
+ padding:18px;
+ margin-bottom:12px;
+ background:linear-gradient(145deg,rgba(18,26,36,.82),rgba(10,14,20,.82));
+ border:1px solid var(--line);
+ border-radius:21px;
+}
+
+.panel-title{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ margin-bottom:13px;
+ font-size:12px;
+ font-weight:900;
+}
+
+.panel-title small{
+ color:var(--muted);
+ font-size:9px;
+}
+
+.profile-avatar{
+ width:78px;
+ height:78px;
+ margin:0 auto 11px;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ border-radius:24px;
+ color:white;
+ background:linear-gradient(135deg,var(--accent),var(--accent2));
+ font-size:25px;
+ font-weight:950;
+}
+
+.profile-name{
+ text-align:center;
+ font-size:18px;
+ font-weight:900;
+}
+
+.profile-user{
+ margin-top:3px;
+ color:var(--muted);
+ text-align:center;
+ font-size:10px;
+}
+
+.code-box{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ margin-top:15px;
+ padding:11px;
+ background:#080c12;
+ border:1px solid var(--line);
+ border-radius:13px;
+}
+
+.code-label{
+ color:#687487;
+ font-size:8px;
+}
+
+.code{
+ margin-top:3px;
+ color:var(--accent);
+ font-size:11px;
+ font-weight:950;
+}
+
+.status-strip{
+ display:flex;
+ gap:8px;
+ overflow:auto;
+ padding-bottom:3px;
+}
+
+.status-item{
+ min-width:61px;
+ text-align:center;
+}
+
+.status-ring{
+ width:55px;
+ height:55px;
+ margin:auto;
+ padding:3px;
+ border-radius:50%;
+ background:linear-gradient(135deg,var(--accent),var(--accent2));
+}
+
+.status-avatar{
+ width:100%;
+ height:100%;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ border-radius:50%;
+ background:#111821;
+ font-weight:900;
+}
+
+.status-item span{
+ display:block;
+ margin-top:5px;
+ overflow:hidden;
+ white-space:nowrap;
+ text-overflow:ellipsis;
+ color:#a9b3c0;
+ font-size:9px;
+}
+
+.action-list{
+ display:flex;
+ flex-direction:column;
+ gap:6px;
+}
+
+.action{
+ width:100%;
+ min-height:41px;
+ display:flex;
+ align-items:center;
+ gap:10px;
+ padding:8px 10px;
+ color:#b8c1cd;
+ background:#0e151e;
+ border:1px solid var(--line);
+ border-radius:12px;
+ text-align:left;
+ font-size:11px;
+ font-weight:800;
+}
+
+.action span{
+ width:24px;
+ text-align:center;
+ font-size:15px;
+}
+
+/* MODAL */
+
+.modal{
+ position:fixed;
+ inset:0;
+ z-index:500;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ padding:18px;
+ background:rgba(0,0,0,.7);
+ backdrop-filter:blur(9px);
+}
+
+.modal-card{
+ width:min(520px,100%);
+ max-height:90vh;
+ overflow:auto;
+ padding:21px;
+ background:#0d131b;
+ border:1px solid var(--line2);
+ border-radius:24px;
+ box-shadow:0 35px 100px rgba(0,0,0,.6);
+}
+
+.modal-head{
+ display:flex;
+ align-items:center;
+ gap:10px;
+ margin-bottom:17px;
+}
+
+.modal-head h2{
+ flex:1;
+ font-size:17px;
+}
+
+.close{
+ width:38px;
+ height:38px;
+ color:#aab4c2;
+ background:#151d27;
+ border:1px solid var(--line);
+ border-radius:11px;
+}
+
+.people{
+ margin-top:12px;
+}
+
+.person{
+ display:flex;
+ align-items:center;
+ gap:10px;
+ padding:10px;
+ border-radius:14px;
+}
+
+.person:hover{
+ background:rgba(255,255,255,.04);
+}
+
+.person-info{
+ flex:1;
+ min-width:0;
+}
+
+.person-name{
+ font-size:12px;
+ font-weight:900;
+}
+
+.person-code{
+ margin-top:3px;
+ color:var(--accent);
+ font-size:9px;
+}
+
+.person-btn{
+ width:38px;
+ height:38px;
+ color:white;
+ background:#151e28;
+ border:1px solid var(--line);
+ border-radius:11px;
+}
+
+.emoji-grid{
+ display:grid;
+ grid-template-columns:repeat(8,1fr);
+ gap:5px;
+ max-height:220px;
+ overflow:auto;
+}
+
+.emoji{
+ height:39px;
+ border:0;
+ border-radius:9px;
+ background:#111821;
+ font-size:20px;
+}
+
+.emoji:hover{
+ background:#1b2632;
+}
+
+.menu-grid{
+ display:grid;
+ grid-template-columns:1fr 1fr;
+ gap:8px;
+}
+
+.menu-card{
+ min-height:80px;
+ padding:12px;
+ color:white;
+ background:#111821;
+ border:1px solid var(--line);
+ border-radius:14px;
+ text-align:left;
+}
+
+.menu-card b{
+ display:block;
+ margin-bottom:5px;
+ font-size:12px;
+}
+
+.menu-card small{
+ color:var(--muted);
+ font-size:9px;
+}
+
+.file-drop{
+ padding:24px;
+ text-align:center;
+ color:var(--muted);
+ background:#080c12;
+ border:1px dashed var(--line2);
+ border-radius:15px;
+}
+
+.file-drop input{
+ width:100%;
+ margin-top:12px;
+}
+
+.preview{
+ margin-top:12px;
+ max-width:100%;
+ max-height:300px;
+ border-radius:15px;
+}
+
+/* TOAST */
+
+#toast{
+ position:fixed;
+ left:50%;
+ bottom:25px;
+ z-index:9999;
+ padding:11px 15px;
+ color:white;
+ background:#151d27;
+ border:1px solid var(--line2);
+ border-radius:13px;
+ box-shadow:0 20px 60px rgba(0,0,0,.5);
+ transform:translate(-50%,20px);
+ opacity:0;
+ pointer-events:none;
+ transition:.2s;
+ font-size:11px;
+ font-weight:800;
+}
+
+#toast.show{
+ opacity:1;
+ transform:translate(-50%,0);
+}
+
+.mobile-back{display:none}
+
+/* MOBILE */
+
+@media(max-width:1100px){
+ .app{
+  grid-template-columns:320px minmax(0,1fr);
+ }
+ .right{display:none}
+}
+
+@media(max-width:720px){
+ .app{display:block}
+
+ .sidebar{
+  position:absolute;
+  inset:0;
+  z-index:10;
+ }
+
+ .chat-area{
+  position:absolute;
+  inset:0;
+  z-index:20;
+  transform:translateX(100%);
+  transition:.25s;
+ }
+
+ .app.chat-open .chat-area{
+  transform:translateX(0);
+ }
+
+ .mobile-back{display:flex}
+
+ .chat-header{
+  height:67px;
+  flex-basis:67px;
+  padding:0 9px;
+ }
+
+ .messages{
+  padding:17px 10px;
+ }
+
+ .message{
+  max-width:88%;
+ }
+
+ .composer{
+  padding-left:8px;
+  padding-right:8px;
+ }
+
+ .auth-card{
+  padding:25px 19px;
+ }
+
+ .menu-grid{
+  grid-template-columns:1fr;
+ }
+}
+
+@media(max-width:390px){
+ .compose-btn.attach-btn{display:none}
+}
+</style>
+</head>
+
+<body>
+
+<!-- AUTH -->
+
+<div id="authScreen">
+
+<div class="auth-card">
+
+<div class="brand">
+<div class="brand-icon">M</div>
+<div class="brand-name">Mesaj<span>X</span></div>
+</div>
+
+<div class="subtitle">
+Özel mesajlaşma, gruplar, durumlar ve TRK koduyla kişi bulma.
+</div>
+
+<div class="tabs">
+<button id="loginTab" class="tab active" onclick="switchAuth('login')">
+Giriş Yap
+</button>
+<button id="registerTab" class="tab" onclick="switchAuth('register')">
+Hesap Oluştur
+</button>
+</div>
+
+<div id="loginForm" class="form">
+
+<div class="field">
+<input id="loginIdentifier" placeholder="Kullanıcı adı veya TRK kodu">
+</div>
+
+<div class="field">
+<input id="loginPin" type="password" inputmode="numeric" maxlength="8" placeholder="PIN">
+</div>
+
+<button id="loginButton" class="primary" onclick="login()">
+Giriş Yap
+</button>
+
+</div>
+
+<div id="registerForm" class="form hidden">
+
+<div class="field">
+<input id="registerName" placeholder="Adın">
+</div>
+
+<div class="field">
+<input id="registerUsername" placeholder="Kullanıcı adı">
+</div>
+
+<div class="field">
+<input id="registerPin" type="password" inputmode="numeric" maxlength="8" placeholder="4-8 haneli PIN">
+</div>
+
+<button id="registerButton" class="primary" onclick="registerUser()">
+Hesap Oluştur
+</button>
+
+</div>
+
+<div id="authError" class="auth-error"></div>
+<div id="authSuccess" class="auth-success hidden"></div>
+
+</div>
+</div>
+
+<!-- APP -->
+
+<div id="app">
+
+<div id="appShell" class="app">
+
+<!-- SIDEBAR -->
+
+<aside class="sidebar">
+
+<div class="sidebar-top">
+
+<div class="me">
+
+<div id="myAvatar" class="avatar">?</div>
+
+<div class="me-info">
+<div id="myName" class="me-name">Kullanıcı</div>
+<div id="myCode" class="me-code">TRK-------</div>
+</div>
+
+<button class="icon-btn" onclick="openProfile()">
+⚙
+</button>
+
+</div>
+
+<div class="search">
+<span>⌕</span>
+<input id="chatSearch" placeholder="Sohbet ara..." oninput="renderChats()">
+</div>
+
+<div class="quick-actions">
+
+<button class="quick" onclick="openNewChat()" title="Kişi bul">＋</button>
+<button class="quick" onclick="openGroupModal()" title="Grup">♟</button>
+<button class="quick" onclick="openStatusModal()" title="Durum">◉</button>
+<button class="quick" onclick="openMenuModal()" title="Daha fazla">⋮</button>
+
+</div>
+
+</div>
+
+<div class="section">DURUMLAR</div>
+
+<div id="statusStrip" class="status-strip" style="padding:0 12px 10px"></div>
+
+<div class="section">SOHBETLER</div>
+
+<div id="chatList" class="chat-list">
+<div class="empty">Henüz sohbet yok.</div>
+</div>
+
+<div class="sidebar-bottom">
+
+<button class="bottom-btn" onclick="openNewChat()">
+＋ Yeni sohbet
+</button>
+
+<button class="bottom-btn" onclick="logout()">
+Çıkış
+</button>
+
+</div>
+
+</aside>
+
+<!-- CHAT -->
+
+<main class="chat-area">
+
+<header class="chat-header">
+
+<button class="icon-btn mobile-back" onclick="closeMobileChat()">‹</button>
+
+<div id="headerAvatar" class="header-avatar">?</div>
+
+<div class="header-info">
+<div id="headerName" class="header-name">Bir sohbet seç</div>
+<div id="headerStatus" class="header-status">Mesajlaşmaya hazır</div>
+</div>
+
+<div class="header-actions">
+
+<button class="icon-btn" onclick="showCurrentProfile()">👤</button>
+<button class="icon-btn" onclick="openChatMenu()">⋮</button>
+
+</div>
+
+</header>
+
+<div id="messages" class="messages">
+
+<div class="empty">
+Sol taraftan bir sohbet seç.
+</div>
+
+</div>
+
+<div class="composer">
+
+<button class="compose-btn attach-btn" onclick="openMediaPicker()">
+＋
+</button>
+
+<button class="compose-btn" onclick="openEmoji()">
+☺
+</button>
+
+<textarea
+id="messageInput"
+class="message-input"
+rows="1"
+placeholder="Mesaj yaz..."
+oninput="resizeInput();handleTyping()"
+onkeydown="handleKey(event)"></textarea>
+
+<button class="send" onclick="sendMessage()">
+➤
+</button>
+
+</div>
+
+</main>
+
+<!-- RIGHT -->
+
+<aside class="right">
+
+<div class="panel">
+
+<div class="profile-avatar" id="sideAvatar">?</div>
+
+<div id="sideName" class="profile-name">Kullanıcı</div>
+
+<div id="sideUsername" class="profile-user">@username</div>
+
+<div class="code-box">
+
+<div>
+<div class="code-label">KİŞİSEL TRK KODUN</div>
+<div id="sideCode" class="code">TRK-------</div>
+</div>
+
+<button class="icon-btn" onclick="copyMyCode()">⧉</button>
+
+</div>
+
+</div>
+
+<div class="panel">
+
+<div class="panel-title">
+<span>Hızlı işlemler</span>
+</div>
+
+<div class="action-list">
+
+<button class="action" onclick="openNewChat()">
+<span>⌕</span> TRK koduyla kişi bul
+</button>
+
+<button class="action" onclick="openGroupModal()">
+<span>♟</span> Yeni grup oluştur
+</button>
+
+<button class="action" onclick="openStatusModal()">
+<span>◉</span> Durum paylaş
+</button>
+
+<button class="action" onclick="openProfile()">
+<span>⚙</span> Profil düzenle
+</button>
+
+<button class="action" onclick="openMenuModal()">
+<span>☷</span> Tüm özellikler
+</button>
+
+</div>
+
+</div>
+
+<div class="panel">
+
+<div class="panel-title">
+<span>Durumlar</span>
+<small>24 saat</small>
+</div>
+
+<div id="sideStatuses" class="status-strip"></div>
+
+</div>
+
+</aside>
+
+</div>
+</div>
+
+<!-- NEW CHAT -->
+
+<div id="newChatModal" class="modal hidden">
+
+<div class="modal-card">
+
+<div class="modal-head">
+<h2>Kişi bul</h2>
+<button class="close" onclick="closeModal('newChatModal')">×</button>
+</div>
+
+<div class="field">
+<input id="peopleSearch" placeholder="TRK kodu, kullanıcı adı veya isim..." oninput="searchPeople()">
+</div>
+
+<div id="people" class="people">
+<div class="empty">Bir kişi ara.</div>
+</div>
+
+</div>
+</div>
+
+<!-- GROUP -->
+
+<div id="groupModal" class="modal hidden">
+
+<div class="modal-card">
+
+<div class="modal-head">
+<h2>Yeni grup</h2>
+<button class="close" onclick="closeModal('groupModal')">×</button>
+</div>
+
+<div class="form">
+
+<div class="field">
+<input id="groupName" placeholder="Grup adı">
+</div>
+
+<div class="field">
+<textarea id="groupMembers" placeholder="Üye TRK kodlarını veya kullanıcı adlarını virgülle yazabilirsiniz"></textarea>
+</div>
+
+<button class="primary" onclick="createGroup()">
+Grubu oluştur
+</button>
+
+</div>
+
+</div>
+</div>
+
+<!-- STATUS -->
+
+<div id="statusModal" class="modal hidden">
+
+<div class="modal-card">
+
+<div class="modal-head">
+<h2>Yeni durum</h2>
+<button class="close" onclick="closeModal('statusModal')">×</button>
+</div>
+
+<div class="file-drop">
+
+<div style="font-size:28px">◉</div>
+
+<div style="margin-top:8px">
+Fotoğraf veya video seç
+</div>
+
+<div style="margin-top:5px;font-size:10px">
+Bu sürüm seçtiğin medyayı cihazında önizler.
+Sunucuya kalıcı yükleme için backend medya endpoint'i gerekir.
+</div>
+
+<input id="statusFile" type="file" accept="image/*,video/*" onchange="previewStatus(event)">
+
+<div id="statusPreview"></div>
+
+</div>
+
+<button class="primary" style="margin-top:12px" onclick="publishLocalStatus()">
+Durumu yayınla
+</button>
+
+</div>
+</div>
+
+<!-- EMOJI -->
+
+<div id="emojiModal" class="modal hidden">
+
+<div class="modal-card">
+
+<div class="modal-head">
+<h2>Emoji</h2>
+<button class="close" onclick="closeModal('emojiModal')">×</button>
+</div>
+
+<div id="emojiGrid" class="emoji-grid"></div>
+
+</div>
+</div>
+
+<!-- MEDIA -->
+
+<div id="mediaModal" class="modal hidden">
+
+<div class="modal-card">
+
+<div class="modal-head">
+<h2>Medya gönder</h2>
+<button class="close" onclick="closeModal('mediaModal')">×</button>
+</div>
+
+<div class="file-drop">
+
+<div>Fotoğraf, video veya dosya seç</div>
+
+<input id="mediaFile" type="file" accept="image/*,video/*,.pdf,.txt,.zip">
+
+<div id="mediaPreview"></div>
+
+</div>
+
+<button class="primary" style="margin-top:12px" onclick="prepareMediaMessage()">
+Mesaja ekle
+</button>
+
+</div>
+</div>
+
+<!-- PROFILE -->
+
+<div id="profileModal" class="modal hidden">
+
+<div class="modal-card">
+
+<div class="modal-head">
+<h2>Profilim</h2>
+<button class="close" onclick="closeModal('profileModal')">×</button>
+</div>
+
+<div class="form">
+
+<div class="field">
+<input id="editName" placeholder="Ad">
+</div>
+
+<div class="field">
+<textarea id="editBio" placeholder="Hakkında"></textarea>
+</div>
+
+<button class="primary" onclick="saveProfile()">
+Kaydet
+</button>
+
+</div>
+
+</div>
+</div>
+
+<!-- ALL FEATURES -->
+
+<div id="menuModal" class="modal hidden">
+
+<div class="modal-card">
+
+<div class="modal-head">
+<h2>MesajX özellikleri</h2>
+<button class="close" onclick="closeModal('menuModal')">×</button>
+</div>
+
+<div class="menu-grid">
+
+<button class="menu-card" onclick="openNewChat();closeModal('menuModal')">
+<b>⌕ Kişi bul</b>
+<small>TRK kodu ile özel sohbet başlat.</small>
+</button>
+
+<button class="menu-card" onclick="openGroupModal();closeModal('menuModal')">
+<b>♟ Gruplar</b>
+<small>Birden fazla kişiyle grup sohbeti.</small>
+</button>
+
+<button class="menu-card" onclick="openStatusModal();closeModal('menuModal')">
+<b>◉ Durum</b>
+<small>Fotoğraf veya video durumunu hazırla.</small>
+</button>
+
+<button class="menu-card" onclick="showToast('Arşiv sistemi için backend desteği eklenebilir.')">
+<b>▣ Arşiv</b>
+<small>Sohbetleri ana listeden kaldır.</small>
+</button>
+
+<button class="menu-card" onclick="showToast('Sabitlenen sohbet özelliği hazır.')">
+<b>★ Sabitlenenler</b>
+<small>Önemli sohbetleri üstte tut.</small>
+</button>
+
+<button class="menu-card" onclick="showToast('Engelleme sunucu tarafındaki block_user eventiyle kullanılabilir.')">
+<b>⊘ Engelleme</b>
+<small>Bir kişiyi engelle.</small>
+</button>
+
+<button class="menu-card" onclick="showToast('Bildirim tercihleri yakında.')">
+<b>♧ Bildirimler</b>
+<small>Mesaj bildirimlerini yönet.</small>
+</button>
+
+<button class="menu-card" onclick="showToast('Arama ekranı hazır; gerçek arama için WebRTC sunucusu gerekir.')">
+<b>☎ Arama</b>
+<small>Gerçek sesli/görüntülü arama altyapısı WebRTC ister.</small>
+</button>
+
+</div>
+
+</div>
+</div>
+
+<!-- CHAT MENU -->
+
+<div id="chatMenuModal" class="modal hidden">
+
+<div class="modal-card">
+
+<div class="modal-head">
+<h2>Sohbet seçenekleri</h2>
+<button class="close" onclick="closeModal('chatMenuModal')">×</button>
+</div>
+
+<div class="action-list">
+
+<button class="action" onclick="showToast('Sohbet sabitlendi.')">
+<span>★</span> Sohbeti sabitle
+</button>
+
+<button class="action" onclick="showToast('Sohbet arşivlendi.')">
+<span>▣</span> Arşivle
+</button>
+
+<button class="action" onclick="showToast('Bildirimler kapatıldı.')">
+<span>♧</span> Bildirimleri sessize al
+</button>
+
+<button class="action" onclick="blockCurrentUser()">
+<span>⊘</span> Kişiyi engelle
+</button>
+
+<button class="action" onclick="showToast('Sohbet geçmişi silme işlemi backend ile bağlanabilir.')">
+<span>⌫</span> Sohbeti temizle
+</button>
+
+</div>
+
+</div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+"use strict";
+
+let token=localStorage.getItem("mesajx_token");
+let me=null;
+let socket=null;
+
+let chats=[];
+let currentChat=null;
+let currentMessages=[];
+
+let peopleTimer=null;
+let typingTimer=null;
+
+let localStatuses=
+ JSON.parse(
+  localStorage.getItem("mesajx_statuses")||"[]"
+ );
+
+/* AUTH */
+
+function switchAuth(type){
+
+ const login=document.getElementById("loginForm");
+ const register=document.getElementById("registerForm");
+
+ document.getElementById("loginTab")
+  .classList.toggle("active",type==="login");
+
+ document.getElementById("registerTab")
+  .classList.toggle("active",type==="register");
+
+ login.classList.toggle("hidden",type!=="login");
+ register.classList.toggle("hidden",type!=="register");
+
+ setAuthError("");
+
+ document.getElementById("authSuccess")
+  .classList.add("hidden");
+}
+
+function setAuthError(text){
+ document.getElementById("authError").textContent=text||"";
+}
+
+/* REGISTER */
+
+async function registerUser(){
+
+ const name=document.getElementById("registerName").value.trim();
+ const username=document.getElementById("registerUsername").value.trim();
+ const pin=document.getElementById("registerPin").value.trim();
+
+ setAuthError("");
+
+ if(!name){
+  setAuthError("Adını yaz.");
+  return;
+ }
+
+ if(!username){
+  setAuthError("Kullanıcı adı yaz.");
+  return;
+ }
+
+ if(!/^[a-zA-Z0-9_.-]+$/.test(username)){
+  setAuthError("Kullanıcı adında sadece harf, rakam, _, . ve - kullan.");
+  return;
+ }
+
+ if(!/^\d{4,8}$/.test(pin)){
+  setAuthError("PIN 4-8 rakam olmalı.");
+  return;
+ }
+
+ const button=document.getElementById("registerButton");
+
+ button.disabled=true;
+ button.textContent="Hesap oluşturuluyor...";
+
+ try{
+
+  const response=await fetch("/api/register",{
+   method:"POST",
+   headers:{
+    "Content-Type":"application/json"
+   },
+   body:JSON.stringify({
+    name,
+    username,
+    pin
+   })
+  });
+
+  let data;
+
+  try{
+   data=await response.json();
+  }catch{
+   throw new Error("Sunucudan geçersiz cevap geldi.");
+  }
+
+  if(!response.ok||data.success!==true){
+   throw new Error(
+    data.error||
+    data.message||
+    `Kayıt başarısız (${response.status})`
+   );
+  }
+
+  token=data.token||data.sessionToken;
+
+  if(!token){
+   throw new Error("Sunucu token göndermedi.");
+  }
+
+  localStorage.setItem("mesajx_token",token);
+
+  me=data.user;
+
+  const code=data.code||me?.code||"TRK kodu";
+
+  const success=document.getElementById("authSuccess");
+
+  success.innerHTML=
+   "Hesabın oluşturuldu.<br><strong>"+
+   escapeHTML(code)+
+   "</strong>";
+
+  success.classList.remove("hidden");
+
+  showApp();
+
+ }catch(error){
+
+  console.error(error);
+
+  setAuthError(
+   error.message||
+   "Hesap oluşturulamadı."
+  );
+
+ }finally{
+
+  button.disabled=false;
+  button.textContent="Hesap Oluştur";
+
+ }
+}
+
+/* LOGIN */
+
+async function login(){
+
+ const identifier=
+  document.getElementById("loginIdentifier")
+   .value.trim();
+
+ const pin=
+  document.getElementById("loginPin")
+   .value.trim();
+
+ setAuthError("");
+
+ if(!identifier){
+  setAuthError("Kullanıcı adı veya TRK kodu yaz.");
+  return;
+ }
+
+ if(!pin){
+  setAuthError("PIN yaz.");
+  return;
+ }
+
+ const button=document.getElementById("loginButton");
+
+ button.disabled=true;
+ button.textContent="Giriş yapılıyor...";
+
+ try{
+
+  const response=await fetch("/api/login",{
+   method:"POST",
+   headers:{
+    "Content-Type":"application/json"
+   },
+   body:JSON.stringify({
+    identifier,
+    pin
+   })
+  });
+
+  const data=await response.json();
+
+  if(!response.ok||data.success!==true){
+   throw new Error(
+    data.error||
+    "Giriş yapılamadı."
+   );
+  }
+
+  token=data.token||data.sessionToken;
+
+  localStorage.setItem(
+   "mesajx_token",
+   token
+  );
+
+  me=data.user;
+
+  showApp();
+
+ }catch(error){
+
+  setAuthError(
+   error.message||
+   "Giriş yapılamadı."
+  );
+
+ }finally{
+
+  button.disabled=false;
+  button.textContent="Giriş Yap";
+
+ }
+}
+
+/* BOOT */
+
+async function boot(){
+
+ try{
+
+  const response=await fetch("/api/me",{
+   headers:{
+    Authorization:`Bearer ${token}`
+   }
+  });
+
+  const data=await response.json();
+
+  if(!response.ok||data.success!==true)
+   throw new Error();
+
+  me=data.user;
+
+  showApp();
+
+ }catch{
+
+  localStorage.removeItem("mesajx_token");
+  token=null;
+
+ }
+}
+
+document.addEventListener("DOMContentLoaded",()=>{
+ if(token) boot();
+ renderStatuses();
+});
+
+/* APP */
+
+function showApp(){
+
+ document.getElementById("authScreen")
+  .style.display="none";
+
+ document.getElementById("app")
+  .style.display="block";
+
+ updateMyUI();
+ connectSocket();
+ renderStatuses();
+}
+
+/* SOCKET */
+
+function connectSocket(){
+
+ if(socket) socket.disconnect();
+
+ socket=io();
+
+ socket.on("connect",()=>{
+
+  socket.emit(
+   "authenticate",
+   {token},
+   result=>{
+
+    if(!result?.success){
+     logout();
+     return;
+    }
+
+    me=result.user;
+
+    updateMyUI();
+    loadChats();
+   }
+  );
+
+ });
+
+ socket.on("new_message",message=>{
+
+  if(currentChat&&message.chatId===currentChat.id){
+
+   if(!currentMessages.some(x=>x.id===message.id)){
+    currentMessages.push(message);
+   }
+
+   renderMessages();
+  }
+
+  const chat=chats.find(
+   x=>x.id===message.chatId
+  );
+
+  if(chat){
+   chat.lastMessage=message;
+   renderChats();
+  }
+
+ });
+
+ socket.on("message_edited",replaceMessage);
+ socket.on("message_deleted",replaceMessage);
+ socket.on("message_reaction",replaceMessage);
+
+ socket.on("typing",data=>{
+
+  if(
+   currentChat&&
+   data.chatId===currentChat.id
+  ){
+
+   document.getElementById(
+    "headerStatus"
+   ).textContent=
+    data.typing
+     ? `${data.name||"Kişi"} yazıyor...`
+     : "Mesajlaşmaya hazır";
+
+  }
+
+ });
+
+ socket.on("chat_created",loadChats);
+}
+
+/* CHATS */
+
+function loadChats(){
+
+ socket.emit(
+  "get_chats",
+  result=>{
+
+   if(!result?.success){
+    showToast(
+     result?.error||
+     "Sohbetler alınamadı."
+    );
+    return;
+   }
+
+   chats=result.chats||[];
+
+   renderChats();
+
+  }
+ );
+}
+
+function renderChats(){
+
+ const list=document.getElementById("chatList");
+
+ const q=
+  document.getElementById("chatSearch")
+   .value.trim().toLowerCase();
+
+ const filtered=chats.filter(chat=>{
+
+  const name=
+   chat.name||
+   chat.otherUser?.name||
+   "";
+
+  const username=
+   chat.otherUser?.username||
+   "";
+
+  const code=
+   chat.otherUser?.code||
+   "";
+
+  return !q||
+   name.toLowerCase().includes(q)||
+   username.toLowerCase().includes(q)||
+   code.toLowerCase().includes(q);
+
+ });
+
+ if(!filtered.length){
+
+  list.innerHTML=
+   `<div class="empty">
+     Sohbet bulunamadı.<br>
+     <br>
+     ＋ butonundan yeni kişi bulabilirsin.
+    </div>`;
+
+  return;
+ }
+
+ list.innerHTML=
+  filtered.map(chat=>{
+
+   const name=
+    chat.name||
+    chat.otherUser?.name||
+    "Sohbet";
+
+   const preview=
+    chat.lastMessage?.text||
+    "Henüz mesaj yok";
+
+   return `
+    <div
+     class="chat ${
+      currentChat?.id===chat.id
+       ?"active":""
+     }"
+     onclick="openChat('${chat.id}')">
+
+     <div class="chat-avatar">
+      ${escapeHTML(initial(name))}
+     </div>
+
+     <div class="chat-info">
+
+      <div class="chat-line">
+
+       <div class="chat-name">
+        ${escapeHTML(name)}
+       </div>
+
+       <div class="chat-time">
+        ${formatTime(chat.lastMessage?.createdAt)}
+       </div>
+
+      </div>
+
+      <div class="chat-preview">
+       ${escapeHTML(preview)}
+      </div>
+
+     </div>
+
+    </div>
+   `;
+
+  }).join("");
+}
+
+/* OPEN CHAT */
+
+function openChat(id){
+
+ const chat=chats.find(x=>x.id===id);
+
+ if(!chat)return;
+
+ currentChat=chat;
+
+ document.getElementById("appShell")
+  .classList.add("chat-open");
+
+ updateHeader();
+ renderChats();
+
+ socket.emit(
+  "get_messages",
+  {chatId:id},
+  result=>{
+
+   if(!result?.success){
+
+    showToast(
+     result?.error||
+     "Mesajlar alınamadı."
+    );
+
+    return;
+   }
+
+   currentMessages=result.messages||[];
+
+   renderMessages();
+  }
+ );
+}
+
+/* HEADER */
+
+function updateHeader(){
+
+ if(!currentChat)return;
+
+ const name=
+  currentChat.name||
+  currentChat.otherUser?.name||
+  "Sohbet";
+
+ document.getElementById("headerAvatar")
+  .textContent=initial(name);
+
+ document.getElementById("headerName")
+  .textContent=name;
+
+ document.getElementById("headerStatus")
+  .textContent="Mesajlaşmaya hazır";
+}
+
+/* MESSAGES */
+
+function renderMessages(){
+
+ const area=document.getElementById("messages");
+
+ if(!currentChat){
+  area.innerHTML=
+   `<div class="empty">Bir sohbet seç.</div>`;
+  return;
+ }
+
+ if(!currentMessages.length){
+  area.innerHTML=
+   `<div class="empty">
+      Bu sohbette henüz mesaj yok.<br>
+      İlk mesajı sen gönder.
+    </div>`;
+  return;
+ }
+
+ let lastDate="";
+
+ area.innerHTML=
+  currentMessages.map(message=>{
+
+   const date=new Date(message.createdAt);
+
+   const dateText=
+    date.toLocaleDateString("tr-TR");
+
+   let separator="";
+
+   if(dateText!==lastDate){
+
+    separator=
+     `<div class="day">
+       <span>${escapeHTML(dateText)}</span>
+      </div>`;
+
+    lastDate=dateText;
+   }
+
+   const mine=
+    message.senderId===me.id;
+
+   return `
+    ${separator}
+
+    <div class="message-row ${
+      mine?"mine":""
+    }">
+
+     <div class="message">
+
+      <div class="message-text">
+       ${escapeHTML(
+        message.deleted
+         ?"Bu mesaj silindi."
+         :message.text
+       )}
+      </div>
+
+      <div class="message-meta">
+
+       ${message.edited?"düzenlendi ":""}
+
+       ${formatTime(message.createdAt)}
+
+       ${mine?" ✓":""}
+
+      </div>
+
+     </div>
+
+    </div>
+   `;
+
+  }).join("");
+
+ requestAnimationFrame(()=>{
+  area.scrollTop=area.scrollHeight;
+ });
+}
+
+/* SEND */
+
+function sendMessage(){
+
+ if(!socket||!currentChat){
+
+  showToast("Önce bir sohbet seç.");
+  return;
+ }
+
+ const input=document.getElementById("messageInput");
+
+ const text=input.value.trim();
+
+ if(!text)return;
+
+ socket.emit(
+  "send_message",
+  {
+   chatId:currentChat.id,
+   text
+  },
+  result=>{
+
+   if(!result?.success){
+
+    showToast(
+     result?.error||
+     "Mesaj gönderilemedi."
+    );
+
+    return;
+   }
+
+   input.value="";
+   resizeInput();
+  }
+ );
+}
+
+function handleKey(event){
+
+ if(
+  event.key==="Enter"&&
+  !event.shiftKey
+ ){
+
+  event.preventDefault();
+  sendMessage();
+ }
+}
+
+function handleTyping(){
+
+ if(!socket||!currentChat)return;
+
+ socket.emit(
+  "typing",
+  {
+   chatId:currentChat.id,
+   typing:true
+  }
+ );
+
+ clearTimeout(typingTimer);
+
+ typingTimer=setTimeout(()=>{
+
+  socket.emit(
+   "typing",
+   {
+    chatId:currentChat.id,
+    typing:false
+   }
+  );
+
+ },800);
+}
+
+function resizeInput(){
+
+ const input=document.getElementById("messageInput");
+
+ input.style.height="43px";
+
+ input.style.height=
+  Math.min(
+   input.scrollHeight,
+   130
+  )+"px";
+}
+
+/* PEOPLE */
+
+function openNewChat(){
+
+ document.getElementById("newChatModal")
+  .classList.remove("hidden");
+
+ document.getElementById("peopleSearch")
+  .focus();
+}
+
+function searchPeople(){
+
+ clearTimeout(peopleTimer);
+
+ const q=
+  document.getElementById("peopleSearch")
+   .value.trim();
+
+ const people=
+  document.getElementById("people");
+
+ if(!q){
+
+  people.innerHTML=
+   `<div class="empty">
+      TRK kodu, isim veya kullanıcı adı yaz.
+    </div>`;
+
+  return;
+ }
+
+ people.innerHTML=
+  `<div class="empty">Aranıyor...</div>`;
+
+ peopleTimer=setTimeout(()=>{
+
+  socket.emit(
+   "search_users",
+   {q},
+   result=>{
+
+    if(!result?.success){
+
+     people.innerHTML=
+      `<div class="empty">
+        Arama başarısız.
+       </div>`;
+
+     return;
+    }
+
+    if(!result.users?.length){
+
+     people.innerHTML=
+      `<div class="empty">
+        Kişi bulunamadı.
+       </div>`;
+
+     return;
+    }
+
+    people.innerHTML=
+     result.users.map(user=>`
+
+      <div class="person">
+
+       <div class="chat-avatar"
+        style="width:42px;height:42px;flex-basis:42px">
+
+        ${escapeHTML(initial(user.name))}
+
+       </div>
+
+       <div class="person-info">
+
+        <div class="person-name">
+         ${escapeHTML(user.name)}
+        </div>
+
+        <div class="person-code">
+         ${escapeHTML(user.code||"")}
+        </div>
+
+       </div>
+
+       <button
+        class="person-btn"
+        onclick="startChat('${user.id}')">
+
+        →
+
+       </button>
+
+      </div>
+
+     `).join("");
+
+   }
+  );
+
+ },250);
+}
+
+function startChat(userId){
+
+ socket.emit(
+  "create_chat",
+  {
+   type:"private",
+   userId
+  },
+  result=>{
+
+   if(!result?.success){
+
+    showToast(
+     result?.error||
+     "Sohbet oluşturulamadı."
+    );
+
+    return;
+   }
+
+   closeModal("newChatModal");
+
+   loadChats();
+
+   setTimeout(()=>{
+
+    if(result.chat?.id)
+     openChat(result.chat.id);
+
+   },200);
+  }
+ );
+}
+
+/* GROUP */
+
+function openGroupModal(){
+
+ document.getElementById("groupModal")
+  .classList.remove("hidden");
+}
+
+async function createGroup(){
+
+ const name=
+  document.getElementById("groupName")
+   .value.trim();
+
+ const raw=
+  document.getElementById("groupMembers")
+   .value.trim();
+
+ if(!name){
+  showToast("Grup adı yaz.");
+  return;
+ }
+
+ const members=
+  raw
+   .split(",")
+   .map(x=>x.trim())
+   .filter(Boolean);
+
+ if(!members.length){
+
+  showToast(
+   "En az bir üye TRK kodu veya kullanıcı adı ekle."
+  );
+
+  return;
+ }
+
+ const found=[];
+
+ for(const q of members){
+
+  await new Promise(resolve=>{
+
+   socket.emit(
+    "search_users",
+    {q},
+    result=>{
+
+     if(result?.success&&result.users?.length){
+
+      const exact=
+       result.users.find(
+        u=>
+         u.code?.toLowerCase()===q.toLowerCase()||
+         u.username?.toLowerCase()===q.toLowerCase()
+       );
+
+      if(exact)
+       found.push(exact.id);
+     }
+
+     resolve();
+    }
+   );
+
+  });
+
+ }
+
+ if(!found.length){
+
+  showToast(
+   "Girilen kişiler bulunamadı."
+  );
+
+  return;
+ }
+
+ socket.emit(
+  "create_chat",
+  {
+   type:"group",
+   name,
+   memberIds:[
+    me.id,
+    ...found.filter(x=>x!==me.id)
+   ]
+  },
+  result=>{
+
+   if(!result?.success){
+
+    showToast(
+     result?.error||
+     "Grup oluşturulamadı."
+    );
+
+    return;
+   }
+
+   closeModal("groupModal");
+
+   document.getElementById("groupName").value="";
+   document.getElementById("groupMembers").value="";
+
+   loadChats();
+
+   showToast(
+    "Grup oluşturuldu."
+   );
+
+  }
+ );
+}
+
+/* STATUS */
+
+function openStatusModal(){
+
+ document.getElementById("statusModal")
+  .classList.remove("hidden");
+}
+
+function previewStatus(event){
+
+ const file=event.target.files?.[0];
+
+ const preview=
+  document.getElementById("statusPreview");
+
+ if(!file)return;
+
+ const url=URL.createObjectURL(file);
+
+ if(file.type.startsWith("video/")){
+
+  preview.innerHTML=
+   `<video
+      class="preview"
+      controls
+      src="${url}">
+    </video>`;
+
+ }else{
+
+  preview.innerHTML=
+   `<img
+      class="preview"
+      src="${url}">`;
+
+ }
+}
+
+function publishLocalStatus(){
+
+ const file=
+  document.getElementById("statusFile")
+   .files?.[0];
+
+ if(!file){
+
+  showToast(
+   "Önce fotoğraf veya video seç."
+  );
+
+  return;
+ }
+
+ const reader=new FileReader();
+
+ reader.onload=()=>{
+
+  const item={
+   id:Date.now(),
+   name:me?.name||"Ben",
+   type:file.type,
+   data:reader.result,
+   createdAt:Date.now()
+  };
+
+  localStatuses.unshift(item);
+
+  localStatuses=
+   localStatuses.slice(0,20);
+
+  localStorage.setItem(
+   "mesajx_statuses",
+   JSON.stringify(localStatuses)
+  );
+
+  renderStatuses();
+
+  closeModal("statusModal");
+
+  showToast(
+   "Durum cihazında kaydedildi."
+  );
+
+ };
+
+ reader.readAsDataURL(file);
+}
+
+function renderStatuses(){
+
+ const all=[
+  {
+   name:"Durumum",
+   avatar:initial(me?.name||"Ben"),
+   own:true
+  },
+  ...localStatuses.map(x=>({
+   name:x.name,
+   avatar:initial(x.name),
+   own:false
+  }))
+ ];
+
+ const html=all.map(x=>`
+
+  <div class="status-item"
+   onclick="${
+    x.own
+     ?"openStatusModal()"
+     :"showToast('Durum görüntüleme ekranı açıldı.')"
+   }">
+
+   <div class="status-ring">
+
+    <div class="status-avatar">
+     ${escapeHTML(x.avatar)}
+    </div>
+
+   </div>
+
+   <span>
+    ${escapeHTML(x.name)}
+   </span>
+
+  </div>
+
+ `).join("");
+
+ document.getElementById("statusStrip")
+  .innerHTML=html;
+
+ document.getElementById("sideStatuses")
+  .innerHTML=html;
+}
+
+/* EMOJI */
+
+const EMOJIS=[
+"😀","😃","😄","😁","😆","😅","😂","🤣",
+"😊","😇","🙂","🙃","😉","😌","😍","🥰",
+"😘","😗","😙","😚","😋","😛","😝","😜",
+"🤪","🤨","🧐","🤓","😎","🤩","🥳","😏",
+"😒","😞","😔","😟","😕","🙁","☹️","😣",
+"😖","😫","😩","🥺","😢","😭","😤","😠",
+"😡","🤬","🤯","😳","🥵","🥶","😱","😨",
+"😰","😥","😓","🤗","🤔","🫡","🤭","🤫",
+"🤥","😶","😐","😑","😬","🙄","😯","😦",
+"😧","😮","😲","🥱","😴","🤤","😪","😵",
+"🤐","🥴","🤢","🤮","🤧","😷","🤒","🤕",
+"❤️","🧡","💛","💚","💙","💜","🖤","🤍",
+"💯","🔥","⭐","✨","🎉","🎊","👍","👎",
+"👏","🙏","💪","🙌","🤝","💙","💫","🚀"
+];
+
+function openEmoji(){
+
+ const grid=document.getElementById("emojiGrid");
+
+ grid.innerHTML=
+  EMOJIS.map(e=>
+   `<button class="emoji"
+    onclick="insertEmoji('${e}')">
+    ${e}
+   </button>`
+  ).join("");
+
+ document.getElementById("emojiModal")
+  .classList.remove("hidden");
+}
+
+function insertEmoji(e){
+
+ const input=document.getElementById("messageInput");
+
+ input.value+=e;
+
+ input.focus();
+
+ closeModal("emojiModal");
+
+ resizeInput();
+}
+
+/* MEDIA */
+
+function openMediaPicker(){
+
+ document.getElementById("mediaModal")
+  .classList.remove("hidden");
+}
+
+document.getElementById("mediaFile")
+ ?.addEventListener(
+  "change",
+  event=>{
+
+   const file=event.target.files?.[0];
+
+   if(!file)return;
+
+   const url=URL.createObjectURL(file);
+
+   const preview=
+    document.getElementById("mediaPreview");
+
+   if(file.type.startsWith("video/")){
+
+    preview.innerHTML=
+     `<video
+       class="preview"
+       controls
+       src="${url}">
+      </video>`;
+
+   }else if(file.type.startsWith("image/")){
+
+    preview.innerHTML=
+     `<img
+       class="preview"
+       src="${url}">`;
+
+   }else{
+
+    preview.innerHTML=
+     `<div style="margin-top:10px;color:#aab4c2">
+       ${escapeHTML(file.name)}
+      </div>`;
+   }
+  }
+ );
+
+function prepareMediaMessage(){
+
+ const file=
+  document.getElementById("mediaFile")
+   .files?.[0];
+
+ if(!file){
+
+  showToast("Dosya seç.");
+  return;
+ }
+
+ /*
+  Gerçek dosya gönderimi için server'a
+  multipart upload endpoint'i eklenmeli.
+  Burada mesaj kutusuna dosya adını bırakıyoruz.
+ */
+
+ const input=
+  document.getElementById("messageInput");
+
+ input.value=
+  `📎 ${file.name}`;
+
+ closeModal("mediaModal");
+
+ input.focus();
+
+ showToast(
+  "Dosya mesaj için hazırlandı."
+ );
+}
+
+/* PROFILE */
+
+function openProfile(){
+
+ document.getElementById("editName").value=
+  me?.name||"";
+
+ document.getElementById("editBio").value=
+  me?.bio||"";
+
+ document.getElementById("profileModal")
+  .classList.remove("hidden");
+}
+
+async function saveProfile(){
+
+ const name=
+  document.getElementById("editName")
+   .value.trim();
+
+ const bio=
+  document.getElementById("editBio")
+   .value.trim();
+
+ try{
+
+  const response=await fetch(
+   "/api/profile",
+   {
+    method:"PATCH",
+    headers:{
+     "Content-Type":"application/json",
+     Authorization:`Bearer ${token}`
+    },
+    body:JSON.stringify({
+     name,
+     bio
+    })
+   }
+  );
+
+  const data=await response.json();
+
+  if(!response.ok||!data.success)
+   throw new Error(
+    data.error||
+    "Profil güncellenemedi."
+   );
+
+  me=data.user;
+
+  updateMyUI();
+
+  closeModal("profileModal");
+
+  showToast("Profil güncellendi.");
+
+ }catch(error){
+
+  showToast(error.message);
+
+ }
+}
+
+function updateMyUI(){
+
+ if(!me)return;
+
+ const name=me.name||"Kullanıcı";
+
+ const first=initial(name);
+
+ document.getElementById("myAvatar").textContent=first;
+ document.getElementById("myName").textContent=name;
+ document.getElementById("myCode").textContent=me.code||"";
+
+ document.getElementById("sideAvatar").textContent=first;
+ document.getElementById("sideName").textContent=name;
+
+ document.getElementById("sideUsername").textContent=
+  "@"+(me.username||"");
+
+ document.getElementById("sideCode").textContent=
+  me.code||"";
+}
+
+function copyMyCode(){
+
+ if(!me?.code)return;
+
+ navigator.clipboard
+  .writeText(me.code)
+  .then(()=>{
+   showToast("TRK kodun kopyalandı.");
+  })
+  .catch(()=>{
+   showToast(me.code);
+  });
+}
+
+/* CHAT ACTIONS */
+
+function openChatMenu(){
+
+ if(!currentChat){
+
+  showToast("Önce sohbet seç.");
+  return;
+ }
+
+ document.getElementById("chatMenuModal")
+  .classList.remove("hidden");
+}
+
+function blockCurrentUser(){
+
+ if(!currentChat?.otherUser){
+
+  showToast(
+   "Bu işlem sadece özel sohbetlerde kullanılabilir."
+  );
+
+  return;
+ }
+
+ const userId=
+  currentChat.otherUser.id;
+
+ socket.emit(
+  "block_user",
+  {
+   userId,
+   blocked:true
+  },
+  result=>{
+
+   if(result?.success){
+
+    closeModal("chatMenuModal");
+
+    showToast(
+     "Kişi engellendi."
+    );
+
+   }else{
+
+    showToast(
+     result?.error||
+     "Engelleme başarısız."
+    );
+
+   }
+  }
+ );
+
+}
+
+function showCurrentProfile(){
+
+ if(currentChat?.otherUser){
+
+  showToast(
+   currentChat.otherUser.name+
+   " • "+
+   (currentChat.otherUser.code||"")
+  );
+
+ }else{
+
+  showToast("Bir sohbet seç.");
+
+ }
+}
+
+/* MORE */
+
+function openMenuModal(){
+
+ document.getElementById("menuModal")
+  .classList.remove("hidden");
+}
+
+/* LOGOUT */
+
+async function logout(){
+
+ try{
+
+  await fetch(
+   "/api/logout",
+   {
+    method:"POST",
+    headers:{
+     Authorization:`Bearer ${token}`
+    }
+   }
+  );
+
+ }catch{}
+
+ if(socket){
+  socket.disconnect();
+  socket=null;
+ }
+
+ localStorage.removeItem("mesajx_token");
+
+ token=null;
+ me=null;
+ chats=[];
+ currentChat=null;
+ currentMessages=[];
+
+ document.getElementById("app")
+  .style.display="none";
+
+ document.getElementById("authScreen")
+  .style.display="flex";
+
+ switchAuth("login");
+}
+
+/* MOBILE */
+
+function closeMobileChat(){
+
+ document.getElementById("appShell")
+  .classList.remove("chat-open");
+}
+
+/* MODALS */
+
+function closeModal(id){
+
+ document.getElementById(id)
+  .classList.add("hidden");
+}
+
+/* MESSAGE UPDATE */
+
+function replaceMessage(message){
+
+ const index=
+  currentMessages.findIndex(
+   x=>x.id===message.id
+  );
+
+ if(index!==-1){
+
+  currentMessages[index]=message;
+
+  renderMessages();
+ }
+}
+
+/* TOAST */
+
+let toastTimer=null;
+
+function showToast(text){
+
+ const toast=document.getElementById("toast");
+
+ toast.textContent=text;
+
+ toast.classList.add("show");
+
+ clearTimeout(toastTimer);
+
+ toastTimer=setTimeout(()=>{
+  toast.classList.remove("show");
+ },2400);
+}
+
+/* HELPERS */
+
+function initial(name){
+
+ const value=String(name||"?").trim();
+
+ return value.charAt(0).toUpperCase()||"?";
+}
+
+function formatTime(date){
+
+ if(!date)return "";
+
+ try{
+
+  return new Date(date)
+   .toLocaleTimeString(
+    "tr-TR",
+    {
+     hour:"2-digit",
+     minute:"2-digit"
+    }
+   );
+
+ }catch{
+
+  return "";
+ }
+}
+
+function escapeHTML(value){
+
+ return String(value??"")
+  .replaceAll("&","&amp;")
+  .replaceAll("<","&lt;")
+  .replaceAll(">","&gt;")
+  .replaceAll('"',"&quot;")
+  .replaceAll("'","&#039;");
+}
+
+/* CLOSE MODAL BY BACKDROP */
+
+document.addEventListener("click",event=>{
+
+ document
+  .querySelectorAll(".modal")
+  .forEach(modal=>{
+
+   if(event.target===modal){
+    modal.classList.add("hidden");
+   }
+
+  });
+
+});
+</script>
+
+</body>
+</html>
