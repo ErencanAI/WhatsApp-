@@ -1,0 +1,2187 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+
+<title>WhatsApp+</title>
+
+<script src="/socket.io/socket.io.js"></script>
+
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+    -webkit-tap-highlight-color:transparent;
+}
+
+:root{
+    --bg:#07100d;
+    --panel:#0c1713;
+    --panel2:#102019;
+    --panel3:#14271f;
+    --line:rgba(255,255,255,.08);
+    --text:#f3fff8;
+    --muted:#91a99e;
+    --green:#25d366;
+    --green2:#1fa855;
+    --danger:#ff4d67;
+    --blue:#4da3ff;
+    --shadow:0 20px 60px rgba(0,0,0,.35);
+}
+
+body{
+    min-height:100vh;
+    background:
+        radial-gradient(circle at 10% 0%,rgba(37,211,102,.12),transparent 30%),
+        radial-gradient(circle at 100% 100%,rgba(0,150,255,.08),transparent 35%),
+        var(--bg);
+    color:var(--text);
+    font-family:Arial,Helvetica,sans-serif;
+    overflow:hidden;
+}
+
+button,
+input{
+    font:inherit;
+}
+
+button{
+    border:0;
+    cursor:pointer;
+}
+
+.app{
+    width:100%;
+    height:100vh;
+    display:flex;
+    overflow:hidden;
+}
+
+.sidebar{
+    width:390px;
+    min-width:390px;
+    border-right:1px solid var(--line);
+    background:rgba(7,16,13,.94);
+    display:flex;
+    flex-direction:column;
+    backdrop-filter:blur(20px);
+}
+
+.topbar{
+    height:76px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 18px;
+    border-bottom:1px solid var(--line);
+}
+
+.logo{
+    font-size:23px;
+    font-weight:800;
+    letter-spacing:-.5px;
+}
+
+.logo span{
+    color:var(--green);
+}
+
+.top-actions{
+    display:flex;
+    gap:8px;
+}
+
+.icon-btn{
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    background:rgba(255,255,255,.06);
+    color:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:.2s;
+}
+
+.icon-btn:hover{
+    background:rgba(37,211,102,.15);
+    transform:translateY(-1px);
+}
+
+.search{
+    padding:13px;
+}
+
+.search-box{
+    height:45px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:0 14px;
+    border-radius:14px;
+    background:rgba(255,255,255,.055);
+    border:1px solid var(--line);
+}
+
+.search-box input{
+    flex:1;
+    border:0;
+    outline:0;
+    background:transparent;
+    color:white;
+}
+
+.search-box input::placeholder{
+    color:#71877d;
+}
+
+.contacts{
+    flex:1;
+    overflow-y:auto;
+    padding:5px 8px 20px;
+}
+
+.contact{
+    width:100%;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:12px;
+    border-radius:16px;
+    background:transparent;
+    color:white;
+    text-align:left;
+    margin-bottom:3px;
+    transition:.2s;
+}
+
+.contact:hover,
+.contact.active{
+    background:rgba(37,211,102,.10);
+}
+
+.avatar{
+    width:52px;
+    height:52px;
+    min-width:52px;
+    border-radius:50%;
+    overflow:hidden;
+    background:linear-gradient(135deg,#25d366,#176b3b);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:800;
+    font-size:18px;
+}
+
+.avatar img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+.contact-info{
+    flex:1;
+    min-width:0;
+}
+
+.contact-name{
+    font-weight:700;
+    margin-bottom:5px;
+}
+
+.contact-last{
+    color:var(--muted);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    font-size:14px;
+}
+
+.contact-meta{
+    text-align:right;
+    font-size:11px;
+    color:#758d82;
+}
+
+.online-dot{
+    width:8px;
+    height:8px;
+    border-radius:50%;
+    background:#56655e;
+    display:inline-block;
+}
+
+.online-dot.online{
+    background:var(--green);
+    box-shadow:0 0 10px rgba(37,211,102,.6);
+}
+
+.chat{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+    background:
+        radial-gradient(circle at 20% 20%,rgba(37,211,102,.035),transparent 30%),
+        radial-gradient(circle at 80% 70%,rgba(70,130,255,.025),transparent 35%),
+        #08110e;
+}
+
+.chat-header{
+    height:76px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:0 18px;
+    border-bottom:1px solid var(--line);
+    background:rgba(8,17,14,.8);
+    backdrop-filter:blur(15px);
+}
+
+.chat-person{
+    flex:1;
+    min-width:0;
+}
+
+.chat-name{
+    font-weight:800;
+}
+
+.chat-status{
+    color:var(--muted);
+    font-size:13px;
+    margin-top:4px;
+}
+
+.messages{
+    flex:1;
+    overflow-y:auto;
+    padding:22px 6%;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+}
+
+.empty{
+    margin:auto;
+    text-align:center;
+    color:var(--muted);
+}
+
+.empty strong{
+    display:block;
+    color:white;
+    font-size:22px;
+    margin-bottom:8px;
+}
+
+.message-row{
+    display:flex;
+}
+
+.message-row.mine{
+    justify-content:flex-end;
+}
+
+.message{
+    max-width:min(72%,600px);
+    padding:10px 13px;
+    border-radius:16px;
+    background:#17251f;
+    box-shadow:0 5px 18px rgba(0,0,0,.14);
+    position:relative;
+}
+
+.message.mine{
+    background:#075e45;
+    border-bottom-right-radius:5px;
+}
+
+.message:not(.mine){
+    border-bottom-left-radius:5px;
+}
+
+.message-text{
+    white-space:pre-wrap;
+    word-break:break-word;
+    line-height:1.4;
+}
+
+.message-bottom{
+    display:flex;
+    justify-content:flex-end;
+    gap:5px;
+    color:#9ab2a7;
+    font-size:10px;
+    margin-top:5px;
+}
+
+.status-read{
+    color:#4db7ff;
+}
+
+.voice{
+    min-width:220px;
+}
+
+.voice button{
+    width:38px;
+    height:38px;
+    border-radius:50%;
+    background:var(--green);
+    color:#06100b;
+    font-weight:bold;
+}
+
+.voice-line{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.wave{
+    flex:1;
+    height:30px;
+    display:flex;
+    align-items:center;
+    gap:2px;
+}
+
+.wave i{
+    display:block;
+    width:3px;
+    border-radius:3px;
+    background:#9ff0bd;
+}
+
+.composer{
+    padding:10px 15px 15px;
+    display:flex;
+    align-items:flex-end;
+    gap:8px;
+    background:rgba(8,17,14,.94);
+    border-top:1px solid var(--line);
+}
+
+.composer-input{
+    flex:1;
+    min-height:48px;
+    max-height:130px;
+    resize:none;
+    outline:0;
+    border:1px solid var(--line);
+    border-radius:17px;
+    padding:14px;
+    background:rgba(255,255,255,.055);
+    color:white;
+}
+
+.send-btn{
+    width:48px;
+    height:48px;
+    border-radius:50%;
+    background:var(--green);
+    color:#041009;
+    font-weight:900;
+    transition:.2s;
+}
+
+.send-btn:hover{
+    transform:scale(1.06);
+}
+
+.recording{
+    animation:pulse 1s infinite;
+    background:var(--danger)!important;
+    color:white!important;
+}
+
+@keyframes pulse{
+    50%{
+        box-shadow:0 0 0 12px rgba(255,77,103,.08);
+    }
+}
+
+.login{
+    position:fixed;
+    inset:0;
+    z-index:100;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    background:
+        radial-gradient(circle at 50% 20%,rgba(37,211,102,.15),transparent 35%),
+        #050a08;
+}
+
+.login.hidden{
+    display:none;
+}
+
+.login-card{
+    width:min(430px,100%);
+    padding:30px;
+    border-radius:28px;
+    border:1px solid var(--line);
+    background:rgba(15,29,23,.92);
+    box-shadow:var(--shadow);
+    backdrop-filter:blur(25px);
+}
+
+.login-card h1{
+    font-size:32px;
+    margin-bottom:8px;
+}
+
+.login-card p{
+    color:var(--muted);
+    margin-bottom:25px;
+}
+
+.field{
+    margin-bottom:13px;
+}
+
+.field input{
+    width:100%;
+    height:52px;
+    padding:0 15px;
+    border-radius:15px;
+    border:1px solid var(--line);
+    outline:0;
+    background:rgba(255,255,255,.055);
+    color:white;
+}
+
+.login-btn{
+    width:100%;
+    height:52px;
+    border-radius:15px;
+    background:var(--green);
+    color:#031008;
+    font-weight:800;
+    margin-top:5px;
+}
+
+.connection{
+    position:fixed;
+    left:50%;
+    bottom:18px;
+    transform:translateX(-50%);
+    z-index:200;
+    padding:10px 16px;
+    border-radius:30px;
+    background:#151f1b;
+    border:1px solid var(--line);
+    font-size:13px;
+    color:#b9cbc2;
+    opacity:0;
+    pointer-events:none;
+    transition:.3s;
+}
+
+.connection.show{
+    opacity:1;
+}
+
+.mobile-back{
+    display:none;
+}
+
+@media(max-width:800px){
+
+    .sidebar{
+        width:100%;
+        min-width:100%;
+    }
+
+    .chat{
+        display:none;
+        width:100%;
+    }
+
+    .app.chat-open .sidebar{
+        display:none;
+    }
+
+    .app.chat-open .chat{
+        display:flex;
+    }
+
+    .mobile-back{
+        display:flex;
+    }
+
+    .messages{
+        padding:18px 12px;
+    }
+
+    .message{
+        max-width:84%;
+    }
+
+    .topbar{
+        height:68px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="login" id="loginScreen">
+
+    <div class="login-card">
+
+        <h1>WhatsApp+</h1>
+
+        <p>
+            Gerçek kullanıcı hesabınla bağlan.
+        </p>
+
+        <div class="field">
+            <input
+                id="usernameInput"
+                placeholder="Kullanıcı adın"
+                autocomplete="username"
+            >
+        </div>
+
+        <div class="field">
+            <input
+                id="displayNameInput"
+                placeholder="Görünen adın"
+                autocomplete="name"
+            >
+        </div>
+
+        <button
+            class="login-btn"
+            id="loginButton"
+        >
+            Hesapla devam et
+        </button>
+
+    </div>
+
+</div>
+
+<div class="app" id="app">
+
+    <aside class="sidebar">
+
+        <div class="topbar">
+
+            <div class="logo">
+                Whats<span>App+</span>
+            </div>
+
+            <div class="top-actions">
+
+                <button
+                    class="icon-btn"
+                    id="refreshUsers"
+                    title="Yenile"
+                >
+                    ↻
+                </button>
+
+                <button
+                    class="icon-btn"
+                    id="profileButton"
+                    title="Profil"
+                >
+                    ●
+                </button>
+
+            </div>
+
+        </div>
+
+        <div class="search">
+
+            <div class="search-box">
+
+                <span>⌕</span>
+
+                <input
+                    id="searchInput"
+                    placeholder="Kişilerde ara..."
+                >
+
+            </div>
+
+        </div>
+
+        <div
+            class="contacts"
+            id="contacts"
+        ></div>
+
+    </aside>
+
+    <main class="chat">
+
+        <header class="chat-header">
+
+            <button
+                class="icon-btn mobile-back"
+                id="backButton"
+            >
+                ‹
+            </button>
+
+            <div
+                class="avatar"
+                id="chatAvatar"
+            >
+                ?
+            </div>
+
+            <div class="chat-person">
+
+                <div
+                    class="chat-name"
+                    id="chatName"
+                >
+                    Sohbet seç
+                </div>
+
+                <div
+                    class="chat-status"
+                    id="chatStatus"
+                >
+                    Bir kişi seç
+                </div>
+
+            </div>
+
+            <button
+                class="icon-btn"
+                id="audioCallButton"
+                title="Sesli arama"
+            >
+                ☎
+            </button>
+
+            <button
+                class="icon-btn"
+                id="videoCallButton"
+                title="Görüntülü arama"
+            >
+                ▣
+            </button>
+
+        </header>
+
+        <section
+            class="messages"
+            id="messages"
+        >
+
+            <div class="empty">
+                <strong>Mesajlaşmaya başla</strong>
+                Soldan gerçek bir kullanıcı seç.
+            </div>
+
+        </section>
+
+        <div class="composer">
+
+            <button
+                class="icon-btn"
+                id="emojiButton"
+                title="Emoji"
+            >
+                ☺
+            </button>
+
+            <textarea
+                class="composer-input"
+                id="messageInput"
+                placeholder="Mesaj yaz..."
+                rows="1"
+            ></textarea>
+
+            <button
+                class="send-btn"
+                id="voiceButton"
+                title="Sesli mesaj"
+            >
+                🎙
+            </button>
+
+            <button
+                class="send-btn"
+                id="sendButton"
+                title="Gönder"
+            >
+                ➤
+            </button>
+
+        </div>
+
+    </main>
+
+</div>
+
+<div
+    class="connection"
+    id="connection"
+>
+    Bağlanıyor...
+</div>
+
+<script>
+
+const socket = io({
+    transports: ["websocket", "polling"]
+});
+
+const state = {
+    me: null,
+    token: null,
+    users: [],
+    selected: null,
+    chatId: null,
+    messages: [],
+    recording: false,
+    recorder: null,
+    chunks: []
+};
+
+const $ = id =>
+    document.getElementById(id);
+
+const loginScreen =
+    $("loginScreen");
+
+const contacts =
+    $("contacts");
+
+const messages =
+    $("messages");
+
+const messageInput =
+    $("messageInput");
+
+const connection =
+    $("connection");
+
+function showConnection(text){
+    connection.textContent =
+        text;
+
+    connection.classList.add(
+        "show"
+    );
+
+    clearTimeout(
+        showConnection.timer
+    );
+
+    showConnection.timer =
+        setTimeout(
+            () => {
+                connection.classList.remove(
+                    "show"
+                );
+            },
+            2500
+        );
+}
+
+function escapeHtml(text){
+
+    return String(text)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+}
+
+function initials(name){
+
+    const parts =
+        String(name)
+            .trim()
+            .split(/\s+/)
+            .slice(0,2);
+
+    return parts
+        .map(x =>
+            x[0] || ""
+        )
+        .join("")
+        .toUpperCase();
+}
+
+function avatarHtml(user){
+
+    if(user.avatar){
+
+        return `
+            <img
+                src="${escapeHtml(user.avatar)}"
+                alt=""
+            >
+        `;
+    }
+
+    return escapeHtml(
+        initials(
+            user.displayName ||
+            user.username
+        )
+    );
+}
+
+function getChatId(user){
+
+    return [
+        state.me.id,
+        user.id
+    ]
+    .sort()
+    .join("__");
+}
+
+async function login(){
+
+    const username =
+        $("usernameInput")
+            .value
+            .trim();
+
+    const displayName =
+        $("displayNameInput")
+            .value
+            .trim();
+
+    if(!username){
+        alert("Kullanıcı adını yaz.");
+        return;
+    }
+
+    showConnection(
+        "Hesap hazırlanıyor..."
+    );
+
+    try{
+
+        let response =
+            await fetch(
+                "/api/users/" +
+                encodeURIComponent(
+                    username
+                )
+            );
+
+        let data =
+            await response.json();
+
+        if(
+            !response.ok ||
+            !data.user
+        ){
+
+            if(!displayName){
+                alert(
+                    "Yeni hesap için görünen adını da yaz."
+                );
+
+                return;
+            }
+
+            response =
+                await fetch(
+                    "/api/users",
+                    {
+                        method:"POST",
+                        headers:{
+                            "Content-Type":
+                                "application/json"
+                        },
+                        body:
+                            JSON.stringify({
+                                username,
+                                displayName
+                            })
+                    }
+                );
+
+            data =
+                await response.json();
+
+            if(!response.ok){
+                throw new Error(
+                    data.error ||
+                    "Hesap oluşturulamadı."
+                );
+            }
+        }
+
+        state.me =
+            data.user;
+
+        response =
+            await fetch(
+                "/api/session",
+                {
+                    method:"POST",
+                    headers:{
+                        "Content-Type":
+                            "application/json"
+                    },
+                    body:
+                        JSON.stringify({
+                            username:
+                                state.me.username
+                        })
+                }
+            );
+
+        data =
+            await response.json();
+
+        if(!response.ok){
+            throw new Error(
+                data.error ||
+                "Oturum oluşturulamadı."
+            );
+        }
+
+        state.token =
+            data.token;
+
+        localStorage.setItem(
+            "wa_plus_username",
+            state.me.username
+        );
+
+        loginScreen.classList.add(
+            "hidden"
+        );
+
+        socket.emit(
+            "user:online",
+            {
+                userId:
+                    state.me.id
+            }
+        );
+
+        await loadUsers();
+
+    }catch(error){
+
+        console.error(error);
+
+        alert(
+            error.message ||
+            "Bağlantı hatası."
+        );
+    }
+}
+
+async function loadUsers(){
+
+    try{
+
+        const response =
+            await fetch(
+                "/api/users"
+            );
+
+        const data =
+            await response.json();
+
+        if(!data.ok){
+            return;
+        }
+
+        state.users =
+            data.users.filter(
+                user =>
+                    user.id !==
+                    state.me.id
+            );
+
+        renderUsers();
+
+    }catch(error){
+
+        console.error(
+            "Users:",
+            error
+        );
+    }
+}
+
+function renderUsers(){
+
+    const search =
+        $("searchInput")
+            .value
+            .trim()
+            .toLowerCase();
+
+    const list =
+        state.users.filter(
+            user =>
+                !search ||
+                user.displayName
+                    .toLowerCase()
+                    .includes(search) ||
+                user.username
+                    .toLowerCase()
+                    .includes(search)
+        );
+
+    if(!list.length){
+
+        contacts.innerHTML = `
+            <div style="
+                padding:30px;
+                text-align:center;
+                color:#91a99e;
+            ">
+                Henüz başka kullanıcı yok.
+            </div>
+        `;
+
+        return;
+    }
+
+    contacts.innerHTML =
+        list.map(
+            user => `
+
+            <button
+                class="contact ${
+                    state.selected &&
+                    state.selected.id ===
+                    user.id
+                    ? "active"
+                    : ""
+                }"
+                data-user-id="${escapeHtml(
+                    user.id
+                )}"
+            >
+
+                <div class="avatar">
+                    ${avatarHtml(user)}
+                </div>
+
+                <div class="contact-info">
+
+                    <div class="contact-name">
+                        ${escapeHtml(
+                            user.displayName ||
+                            user.username
+                        )}
+                    </div>
+
+                    <div class="contact-last">
+                        @${escapeHtml(
+                            user.username
+                        )}
+                    </div>
+
+                </div>
+
+                <div class="contact-meta">
+
+                    <span class="
+                        online-dot
+                        ${
+                            user.online
+                            ? "online"
+                            : ""
+                        }
+                    "></span>
+
+                </div>
+
+            </button>
+        `
+        ).join("");
+
+    contacts
+        .querySelectorAll(
+            ".contact"
+        )
+        .forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        const user =
+                            state.users.find(
+                                item =>
+                                    item.id ===
+                                    button.dataset.userId
+                            );
+
+                        if(user){
+                            openChat(user);
+                        }
+                    }
+                );
+            }
+        );
+}
+
+async function openChat(user){
+
+    state.selected =
+        user;
+
+    state.chatId =
+        getChatId(user);
+
+    $("chatName")
+        .textContent =
+        user.displayName ||
+        user.username;
+
+    $("chatStatus")
+        .textContent =
+        user.online
+            ? "çevrimiçi"
+            : "son görülme mevcut";
+
+    $("chatAvatar")
+        .innerHTML =
+        avatarHtml(user);
+
+    $("app")
+        .classList.add(
+            "chat-open"
+        );
+
+    socket.emit(
+        "chat:join",
+        {
+            chatId:
+                state.chatId
+        }
+    );
+
+    renderUsers();
+
+    await loadMessages();
+}
+
+async function loadMessages(){
+
+    if(!state.chatId){
+        return;
+    }
+
+    try{
+
+        const response =
+            await fetch(
+                "/api/chats/" +
+                encodeURIComponent(
+                    state.chatId
+                ) +
+                "/messages?limit=300"
+            );
+
+        const data =
+            await response.json();
+
+        state.messages =
+            data.messages || [];
+
+        renderMessages();
+
+    }catch(error){
+
+        console.error(
+            "Messages:",
+            error
+        );
+    }
+}
+
+function renderMessages(){
+
+    if(!state.messages.length){
+
+        messages.innerHTML = `
+            <div class="empty">
+                <strong>Henüz mesaj yok</strong>
+                İlk mesajı sen gönder.
+            </div>
+        `;
+
+        return;
+    }
+
+    messages.innerHTML =
+        state.messages.map(
+            message => {
+
+                const mine =
+                    message.senderId ===
+                    state.me.id;
+
+                const time =
+                    new Date(
+                        message.createdAt
+                    )
+                    .toLocaleTimeString(
+                        "tr-TR",
+                        {
+                            hour:"2-digit",
+                            minute:"2-digit"
+                        }
+                    );
+
+                if(
+                    message.deleted
+                ){
+
+                    return `
+                        <div class="
+                            message-row
+                            ${mine ? "mine" : ""}
+                        ">
+                            <div class="
+                                message
+                                ${mine ? "mine" : ""}
+                            ">
+                                <div style="
+                                    color:#9ab2a7;
+                                    font-style:italic;
+                                ">
+                                    Bu mesaj silindi.
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                let content = "";
+
+                if(
+                    message.type ===
+                    "voice"
+                ){
+
+                    content = `
+                        <div class="voice">
+
+                            <div class="voice-line">
+
+                                <button
+                                    onclick="playVoice('${escapeHtml(
+                                        message.media &&
+                                        message.media.url
+                                            ? message.media.url
+                                            : ""
+                                    )}')"
+                                >
+                                    ▶
+                                </button>
+
+                                <div class="wave">
+                                    ${Array
+                                        .from(
+                                            {
+                                                length:24
+                                            }
+                                        )
+                                        .map(
+                                            () => `
+                                                <i style="
+                                                    height:${
+                                                        5 +
+                                                        Math.floor(
+                                                            Math.random()*23
+                                                        )
+                                                    }px
+                                                "></i>
+                                            `
+                                        )
+                                        .join("")
+                                    }
+                                </div>
+
+                            </div>
+
+                        </div>
+                    `;
+
+                }else{
+
+                    content =
+                        `<div class="message-text">
+                            ${escapeHtml(
+                                message.text
+                            )}
+                        </div>`;
+                }
+
+                return `
+                    <div class="
+                        message-row
+                        ${mine ? "mine" : ""}
+                    ">
+
+                        <div class="
+                            message
+                            ${mine ? "mine" : ""}
+                        ">
+
+                            ${content}
+
+                            <div class="message-bottom">
+
+                                ${time}
+
+                                ${
+                                    mine
+                                    ? `
+                                        <span class="${
+                                            message.status ===
+                                            "read"
+                                            ? "status-read"
+                                            : ""
+                                        }">
+                                            ${
+                                                message.status ===
+                                                "read"
+                                                ? "✓✓"
+                                                : message.status ===
+                                                  "delivered"
+                                                ? "✓✓"
+                                                : "✓"
+                                            }
+                                        </span>
+                                    `
+                                    : ""
+                                }
+
+                            </div>
+
+                        </div>
+
+                    </div>
+                `;
+            }
+        ).join("");
+
+    messages.scrollTop =
+        messages.scrollHeight;
+}
+
+function sendMessage(){
+
+    if(!state.selected){
+        alert(
+            "Önce bir kişi seç."
+        );
+
+        return;
+    }
+
+    const text =
+        messageInput
+            .value
+            .trim();
+
+    if(!text){
+        return;
+    }
+
+    socket.emit(
+        "message:send",
+        {
+            senderId:
+                state.me.id,
+
+            receiverId:
+                state.selected.id,
+
+            chatId:
+                state.chatId,
+
+            senderName:
+                state.me.displayName,
+
+            type:
+                "text",
+
+            text
+        }
+    );
+
+    messageInput.value = "";
+    messageInput.style.height =
+        "48px";
+}
+
+function insertEmoji(){
+
+    const emojis = [
+        "😀","😂","❤️","🔥","👍","👎",
+        "😍","😎","🥳","😢","😮","🤔",
+        "👏","🎉","💚","✨","⚡"
+    ];
+
+    const emoji =
+        emojis[
+            Math.floor(
+                Math.random() *
+                emojis.length
+            )
+        ];
+
+    messageInput.value +=
+        emoji;
+
+    messageInput.focus();
+}
+
+async function toggleRecording(){
+
+    if(
+        state.recording
+    ){
+
+        if(
+            state.recorder
+        ){
+            state.recorder.stop();
+        }
+
+        return;
+    }
+
+    if(
+        !navigator.mediaDevices ||
+        !navigator.mediaDevices.getUserMedia
+    ){
+        alert(
+            "Bu tarayıcı ses kaydını desteklemiyor."
+        );
+
+        return;
+    }
+
+    try{
+
+        const stream =
+            await navigator
+                .mediaDevices
+                .getUserMedia({
+                    audio:true
+                });
+
+        state.chunks = [];
+
+        const recorder =
+            new MediaRecorder(
+                stream
+            );
+
+        state.recorder =
+            recorder;
+
+        state.recording =
+            true;
+
+        $("voiceButton")
+            .classList.add(
+                "recording"
+            );
+
+        recorder.ondataavailable =
+            event => {
+
+                if(
+                    event.data.size
+                ){
+                    state.chunks.push(
+                        event.data
+                    );
+                }
+            };
+
+        recorder.onstop =
+            async () => {
+
+                state.recording =
+                    false;
+
+                $("voiceButton")
+                    .classList.remove(
+                        "recording"
+                    );
+
+                stream
+                    .getTracks()
+                    .forEach(
+                        track =>
+                            track.stop()
+                    );
+
+                const blob =
+                    new Blob(
+                        state.chunks,
+                        {
+                            type:
+                                recorder.mimeType ||
+                                "audio/webm"
+                        }
+                    );
+
+                const url =
+                    URL.createObjectURL(
+                        blob
+                    );
+
+                socket.emit(
+                    "voice:message",
+                    {
+                        senderId:
+                            state.me.id,
+
+                        receiverId:
+                            state.selected &&
+                            state.selected.id,
+
+                        chatId:
+                            state.chatId,
+
+                        audioUrl:
+                            url,
+
+                        duration: 0,
+
+                        waveform: []
+                    }
+                );
+            };
+
+        recorder.start();
+
+        showConnection(
+            "🎙️ Kayıt yapılıyor..."
+        );
+
+    }catch(error){
+
+        console.error(error);
+
+        alert(
+            "Mikrofon izni gerekli."
+        );
+    }
+}
+
+function playVoice(url){
+
+    if(!url){
+        return;
+    }
+
+    const audio =
+        new Audio(url);
+
+    audio.play().catch(
+        console.error
+    );
+}
+
+window.playVoice =
+    playVoice;
+
+function startCall(type){
+
+    if(!state.selected){
+        alert(
+            "Önce bir kişi seç."
+        );
+
+        return;
+    }
+
+    socket.emit(
+        "call:start",
+        {
+            callerId:
+                state.me.id,
+
+            receiverId:
+                state.selected.id,
+
+            callType:
+                type
+        }
+    );
+
+    showConnection(
+        type === "video"
+            ? "Görüntülü arama başlatılıyor..."
+            : "Sesli arama başlatılıyor..."
+    );
+}
+
+$("loginButton")
+    .addEventListener(
+        "click",
+        login
+    );
+
+$("sendButton")
+    .addEventListener(
+        "click",
+        sendMessage
+    );
+
+$("emojiButton")
+    .addEventListener(
+        "click",
+        insertEmoji
+    );
+
+$("voiceButton")
+    .addEventListener(
+        "click",
+        toggleRecording
+    );
+
+$("audioCallButton")
+    .addEventListener(
+        "click",
+        () =>
+            startCall("voice")
+    );
+
+$("videoCallButton")
+    .addEventListener(
+        "click",
+        () =>
+            startCall("video")
+    );
+
+$("refreshUsers")
+    .addEventListener(
+        "click",
+        loadUsers
+    );
+
+$("backButton")
+    .addEventListener(
+        "click",
+        () => {
+            $("app")
+                .classList.remove(
+                    "chat-open"
+                );
+        }
+    );
+
+$("searchInput")
+    .addEventListener(
+        "input",
+        renderUsers
+    );
+
+messageInput
+    .addEventListener(
+        "input",
+        () => {
+
+            messageInput.style.height =
+                "48px";
+
+            messageInput.style.height =
+                Math.min(
+                    messageInput.scrollHeight,
+                    130
+                ) + "px";
+
+            if(
+                state.selected
+            ){
+
+                socket.emit(
+                    "typing:start",
+                    {
+                        chatId:
+                            state.chatId,
+
+                        userId:
+                            state.me.id
+                    }
+                );
+            }
+        }
+    );
+
+messageInput
+    .addEventListener(
+        "keydown",
+        event => {
+
+            if(
+                event.key === "Enter" &&
+                !event.shiftKey
+            ){
+
+                event.preventDefault();
+
+                sendMessage();
+            }
+        }
+    );
+
+socket.on(
+    "connect",
+    () => {
+
+        showConnection(
+            "Bağlandı ✓"
+        );
+
+        if(
+            state.me
+        ){
+
+            socket.emit(
+                "user:online",
+                {
+                    userId:
+                        state.me.id
+                }
+            );
+        }
+    }
+);
+
+socket.on(
+    "disconnect",
+    () => {
+
+        showConnection(
+            "Bağlantı kesildi..."
+        );
+    }
+);
+
+socket.on(
+    "server:ready",
+    data => {
+
+        console.log(
+            "Server hazır:",
+            data
+        );
+    }
+);
+
+socket.on(
+    "message:new",
+    message => {
+
+        if(
+            message.chatId ===
+            state.chatId
+        ){
+
+            const exists =
+                state.messages.some(
+                    item =>
+                        item.id ===
+                        message.id
+                );
+
+            if(!exists){
+
+                state.messages.push(
+                    message
+                );
+
+                renderMessages();
+            }
+
+            if(
+                message.senderId !==
+                state.me.id
+            ){
+
+                socket.emit(
+                    "message:delivered",
+                    {
+                        chatId:
+                            message.chatId,
+
+                        messageId:
+                            message.id
+                    }
+                );
+            }
+        }
+
+        loadUsers();
+    }
+);
+
+socket.on(
+    "message:sent",
+    message => {
+
+        if(
+            message.chatId ===
+            state.chatId
+        ){
+
+            const exists =
+                state.messages.some(
+                    item =>
+                        item.id ===
+                        message.id
+                );
+
+            if(!exists){
+
+                state.messages.push(
+                    message
+                );
+
+                renderMessages();
+            }
+        }
+    }
+);
+
+socket.on(
+    "message:status",
+    data => {
+
+        const message =
+            state.messages.find(
+                item =>
+                    item.id ===
+                    data.messageId
+            );
+
+        if(message){
+
+            message.status =
+                data.status;
+
+            if(
+                data.readAt
+            ){
+                message.readAt =
+                    data.readAt;
+            }
+
+            renderMessages();
+        }
+    }
+);
+
+socket.on(
+    "message:edited",
+    message => {
+
+        const index =
+            state.messages.findIndex(
+                item =>
+                    item.id ===
+                    message.id
+            );
+
+        if(index !== -1){
+
+            state.messages[index] =
+                message;
+
+            renderMessages();
+        }
+    }
+);
+
+socket.on(
+    "message:deleted",
+    data => {
+
+        const message =
+            state.messages.find(
+                item =>
+                    item.id ===
+                    data.messageId
+            );
+
+        if(message){
+
+            message.deleted =
+                true;
+
+            message.text =
+                "";
+
+            message.media =
+                null;
+
+            renderMessages();
+        }
+    }
+);
+
+socket.on(
+    "presence",
+    data => {
+
+        const user =
+            state.users.find(
+                item =>
+                    item.id ===
+                    data.userId
+            );
+
+        if(user){
+
+            user.online =
+                data.online;
+
+            user.lastSeen =
+                data.lastSeen;
+
+            renderUsers();
+
+            if(
+                state.selected &&
+                state.selected.id ===
+                data.userId
+            ){
+
+                $("chatStatus")
+                    .textContent =
+                    data.online
+                        ? "çevrimiçi"
+                        : "çevrimdışı";
+            }
+        }
+    }
+);
+
+socket.on(
+    "typing:start",
+    data => {
+
+        if(
+            state.selected &&
+            data.userId ===
+            state.selected.id
+        ){
+
+            $("chatStatus")
+                .textContent =
+                "yazıyor...";
+        }
+    }
+);
+
+socket.on(
+    "typing:stop",
+    data => {
+
+        if(
+            state.selected &&
+            data.userId ===
+            state.selected.id
+        ){
+
+            $("chatStatus")
+                .textContent =
+                state.selected.online
+                    ? "çevrimiçi"
+                    : "çevrimdışı";
+        }
+    }
+);
+
+socket.on(
+    "notification:new",
+    notification => {
+
+        console.log(
+            "Bildirim:",
+            notification
+        );
+
+        if(
+            "Notification" in window &&
+            Notification.permission ===
+                "granted"
+        ){
+
+            new Notification(
+                notification.title,
+                {
+                    body:
+                        notification.body
+                }
+            );
+        }
+    }
+);
+
+socket.on(
+    "phone:ring",
+    call => {
+
+        showConnection(
+            "📞 Gelen arama..."
+        );
+
+        if(
+            navigator.vibrate
+        ){
+
+            navigator.vibrate([
+                300,
+                200,
+                300,
+                200,
+                500
+            ]);
+        }
+    }
+);
+
+socket.on(
+    "call:incoming",
+    call => {
+
+        const caller =
+            state.users.find(
+                user =>
+                    user.id ===
+                    call.callerId
+            );
+
+        const name =
+            caller
+                ? caller.displayName
+                : "Bir kullanıcı";
+
+        const accept =
+            confirm(
+                `${name} seni ${
+                    call.type ===
+                    "video"
+                        ? "görüntülü"
+                        : "sesli"
+                } arıyor.\n\nKabul etmek ister misin?`
+            );
+
+        if(accept){
+
+            socket.emit(
+                "call:accept",
+                {
+                    callId:
+                        call.id
+                }
+            );
+
+        }else{
+
+            socket.emit(
+                "call:reject",
+                {
+                    callId:
+                        call.id
+                }
+            );
+        }
+    }
+);
+
+socket.on(
+    "call:accepted",
+    call => {
+
+        showConnection(
+            "Arama bağlandı."
+        );
+    }
+);
+
+socket.on(
+    "call:rejected",
+    call => {
+
+        showConnection(
+            "Arama reddedildi."
+        );
+    }
+);
+
+socket.on(
+    "call:ended",
+    call => {
+
+        showConnection(
+            "Arama sona erdi."
+        );
+    }
+);
+
+socket.on(
+    "birthday:today",
+    data => {
+
+        alert(
+            data.message ||
+            "Doğum günün kutlu olsun!"
+        );
+    }
+);
+
+const savedUsername =
+    localStorage.getItem(
+        "wa_plus_username"
+    );
+
+if(savedUsername){
+
+    $("usernameInput")
+        .value =
+        savedUsername;
+}
+
+if(
+    "Notification" in window &&
+    Notification.permission ===
+        "default"
+){
+
+    Notification.requestPermission()
+        .catch(
+            () => {}
+        );
+}
+
+</script>
+
+</body>
+</html>
